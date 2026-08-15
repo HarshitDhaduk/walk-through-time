@@ -19,14 +19,18 @@
    ============================================================ */
 
 export const LEDGER_META = {
-  title: "The Republic's Ledger",
+  title: "A Cockroach's Questions",
+  subtitle: "The Republic's Ledger",
   range: '2014 – present',
   preamble:
-    'The walk ends at midnight, 1947. Accountability does not end anywhere. ' +
-    'This is the record of the present era — its major controversies told only ' +
-    'through what the official record itself says: audit reports, court ' +
-    'judgments, regulatory filings, parliamentary answers — every claim ' +
-    'linked to its source, so you can read the document, not the headline.',
+    'In the summer of 2026, India’s students were called cockroaches — and ' +
+    'marched under the name. This section is written by one of them, as a ' +
+    'citizen of a democracy exercising the right that defines it: to question ' +
+    'the government. The walk behind you ends at midnight, 1947. Accountability ' +
+    'does not end anywhere. What follows is the record of the present era, told ' +
+    'only through what the official record itself says — audit reports, court ' +
+    'judgments, regulatory filings, parliamentary answers — every claim linked ' +
+    'to its source, so you can read the document, not the headline.',
   method:
     'Allegations are marked as allegations. Adjudicated findings are marked as findings. ' +
     'Nothing here rests on anonymous claims, and nothing is characterised beyond ' +

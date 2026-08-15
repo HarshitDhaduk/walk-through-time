@@ -52,7 +52,7 @@ export default function Ledger(){
       {/* the section's own home: a printed-ledger hero */}
       <header className="ledger-hero">
         <div className="ledger-hero-in">
-          <div className="ledger-kicker">{LEDGER_META.range} · A companion to the Walk</div>
+          <div className="ledger-kicker">{LEDGER_META.range} · {LEDGER_META.subtitle}</div>
           <h2>{LEDGER_META.title}</h2>
           <p className="ledger-preamble">{LEDGER_META.preamble}</p>
           <div className="ledger-stats" aria-label="What this record contains">

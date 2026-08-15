@@ -1,4 +1,28 @@
-# Walk Through Time: 1526–1947
+# Walk Through Time
+
+**A citizen's walk from 1526 to the present** — built for Independence Day.
+
+Two sections, one site:
+
+1. **The Walk (1526–1947)** — a scroll-driven 3D memorial walkway through the Mughal Empire,
+   British rule and the freedom struggle: 45 stations, 42 public-domain photographs behind
+   glass, monuments you can circle, a guided tour, and a finale at the tricolour at midnight.
+2. **A Cockroach's Questions — The Republic's Ledger (2014–present)** — a documented record of
+   the current era's major controversies, told only through what the official record says:
+   CAG audits, Supreme Court judgments, regulatory filings, parliamentary answers — every claim
+   linked to its source (91 verified links), allegations kept separate from findings.
+
+> In the summer of 2026, India's students were called cockroaches — and marched under the
+> name. This project is by one of them: a citizen of a democracy exercising the right that
+> defines it, to question the government. The history is a tribute; the ledger is a set of
+> questions. Both are built on documents you can read yourself.
+
+The Ledger's data lives in [`src/data/ledger.js`](src/data/ledger.js). Corrections with
+sources are welcome — open an issue with the document.
+
+---
+
+## The Walk: 1526–1947
 
 A single-page, scroll-driven 3D walkway through the timeline of the Mughal Empire and
 British rule in India — from the First Battle of Panipat (1526) to Independence (1947).

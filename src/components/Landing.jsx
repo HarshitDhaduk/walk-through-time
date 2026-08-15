@@ -164,16 +164,17 @@ export default function Landing(){
         {/* the second section of the site: the record of the present era */}
         <section id="land-ledger" className="land-sec">
           <div className="tri-rule" aria-hidden="true"><i /><i /><i /></div>
-          <div className="ledger-kicker">The other section</div>
-          <h2>And after 1947? The Republic's Ledger</h2>
+          <div className="ledger-kicker">The other section · 2014 – present</div>
+          <h2>A Cockroach's Questions</h2>
           <p className="sec-sub">
-            The walk ends at midnight, 1947. Accountability doesn't end anywhere. A companion
-            section documents the present era, 2014 to today — its controversies told only
-            through what the official record says: audit reports, court judgments, regulatory
-            filings, parliamentary answers, every claim linked to its source.
+            The walk ends at midnight, 1947. Accountability doesn't end anywhere. In a
+            democracy, questioning the government is not disloyalty — it is the job. The
+            Republic's Ledger documents the present era, 2014 to today: its controversies told
+            only through what the official record says — audit reports, court judgments,
+            regulatory filings, parliamentary answers — every claim linked to its source.
           </p>
           <button id="ledger-toggle" onClick={() => store.set({ ledgerOpen: true })}>
-            Open the Ledger →
+            Ask the questions →
           </button>
         </section>
 
