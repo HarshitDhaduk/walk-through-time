@@ -63,7 +63,7 @@ const MONO = "'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace";
 export default function Landing(){
   const { load, ready, started, resume, hashIdx, error } = useStore();
   useEffect(() => { document.title = WALK.docTitle; }, []);
-  const [era, setEra] = useState(-1);
+  const [era, setEra] = useState(0);     // Era I is open by default; picking another replaces it
   const [lb, setLb] = useState(-1);      // index into PLATES
 
   const shown = useMemo(() => era < 0 ? PLATES : PLATES.filter(p => p.zone === era), [era]);
@@ -91,11 +91,12 @@ export default function Landing(){
   const beginAtStation = i => begin(STATION_S[i]);
   const cur = lb >= 0 ? PLATES[lb] : null;
 
-  // every corridor is listed; only the chosen one is opened to show its plates
-  const bands = ERAS.map((e, k) => ({ ...e, k, plates: PLATES.filter(p => p.zone === k), open: era === k }));
+  // one corridor at a time: the chosen era's page replaces the previous one
+  const bands = ERAS.map((e, k) => ({ ...e, k, plates: PLATES.filter(p => p.zone === k), open: true }))
+    .filter(b => b.k === era);
   const pickEra = k => {
     setEra(k);
-    if (k >= 0) setTimeout(() => {
+    setTimeout(() => {
       const el = document.getElementById('band-' + k);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 30);
@@ -120,7 +121,6 @@ export default function Landing(){
             <nav className="gl-nav">
               <a href="#promenade">Plates</a>
               <a href="#stations">Floor plan</a>
-              <a href="#ledger-callout">Ledger</a>
               <button className="gl-btn-navy sm" disabled={!ready} onClick={() => begin(null)}>
                 {ready ? 'Begin the Walk' : (load.msg || 'Preparing…')}
               </button>
@@ -129,28 +129,23 @@ export default function Landing(){
           <div className="gl-inlay" aria-hidden="true" />
         </header>
 
-        {/* ---- plaza hero: the chakra turns behind the plaza ---- */}
+        {/* ---- hero: the Ashoka Chakra turns directly behind the title ---- */}
         <section className="gl-hero">
-          <div className="gl-plaza" aria-hidden="true">
-            <div className="gl-plaza-in">
-              <div className="ring saffron" /><div className="ring green" />
-              <div className="ring thin a" /><div className="ring thin b" />
-              <div className="gl-rays" />
-              <svg className="gl-chakra" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="5" />
-                <circle cx="50" cy="50" r="7" fill="currentColor" />
-                <g stroke="currentColor" strokeWidth="2">
-                  {Array.from({ length: 24 }, (_, i) => {
-                    const a = i * Math.PI / 12;
-                    return <line key={i} x1="50" y1="50" x2={(50 + 40 * Math.sin(a)).toFixed(2)} y2={(50 - 40 * Math.cos(a)).toFixed(2)} />;
-                  })}
-                </g>
-              </svg>
-            </div>
-          </div>
-
           <div className="gl-wrap gl-hero-grid">
-            <div>
+            <div className="gl-hero-copy">
+              <div className="gl-chakra-bg" aria-hidden="true">
+                <div className="gl-rays" />
+                <svg className="gl-chakra" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="5" />
+                  <circle cx="50" cy="50" r="7" fill="currentColor" />
+                  <g stroke="currentColor" strokeWidth="2">
+                    {Array.from({ length: 24 }, (_, i) => {
+                      const a = i * Math.PI / 12;
+                      return <line key={i} x1="50" y1="50" x2={(50 + 40 * Math.sin(a)).toFixed(2)} y2={(50 - 40 * Math.cos(a)).toFixed(2)} />;
+                    })}
+                  </g>
+                </svg>
+              </div>
               <div className="gl-kicker">{IS_LEDGER ? 'The documented corridor · Every plate has its papers' : 'A memorial promenade · Public domain'}</div>
               {IS_LEDGER
                 ? <h1>A Cockroach's<br />Questions</h1>
@@ -216,9 +211,8 @@ export default function Landing(){
               <div className="gl-count">On the wall<br /><b>{shown.length}</b> of {PLATES.length}</div>
             </div>
             <div className="gl-rail" role="group" aria-label="Jump to an era">
-              {[{ k:-1, roman:'All eras', short:'The whole walk', years:RANGE.replace(' — ', '–'), count:PLATES.length, bg:'#26356e', fg:'#f0ead9' }]
-                .concat(ERAS.map((e, k) => ({ k, roman:'Era ' + e.roman, short:e.short, years:e.years,
-                  count:PLATES.filter(p => p.zone === k).length, bg:e.bg, fg:e.fg })))
+              {ERAS.map((e, k) => ({ k, roman:'Era ' + e.roman, short:e.short, years:e.years,
+                  count:PLATES.filter(p => p.zone === k).length, bg:e.bg, fg:e.fg }))
                 .map(r => (
                   <button key={r.k} onClick={() => pickEra(r.k)}
                           className={era === r.k ? 'on' : ''}
@@ -238,8 +232,7 @@ export default function Landing(){
           <section key={b.k} id={'band-' + b.k} className={'gl-band' + (b.open ? ' open' : '')} style={{ background:b.bg }}>
             <div className="gl-inlay big" aria-hidden="true" />
             <div className="gl-wrap">
-              <button className="gl-band-head" style={{ borderColor:b.rule, color:b.fg }}
-                      aria-expanded={b.open} onClick={() => pickEra(b.open ? -1 : b.k)}>
+              <div className="gl-band-head" style={{ borderColor:b.rule, color:b.fg }}>
                 <div className="gl-band-title">
                   <span className="gl-medal" style={{ borderColor:b.rule }} aria-hidden="true"><i style={{ background:b.rule }} /></span>
                   <div>
@@ -247,10 +240,8 @@ export default function Landing(){
                     <h3 style={{ color:b.fg }}>{b.name}</h3>
                   </div>
                 </div>
-                <div className="gl-band-note" style={{ color:b.sub }}>
-                  {b.note}<span className="gl-band-cta">{b.open ? 'Close the corridor ↑' : 'Enter the corridor ↓'}</span>
-                </div>
-              </button>
+                <div className="gl-band-note" style={{ color:b.sub }}>{b.note}</div>
+              </div>
               {b.open && <div className="gl-plates">
                 {b.plates.map(p => {
                   const scorch = p.id === 'revolt-1857';
@@ -313,40 +304,6 @@ export default function Landing(){
               ))}
             </div>
             <p className="gl-legend">Filled inlay · photograph behind glass &nbsp;&nbsp; Pale inlay · drawn vignette</p>
-          </div>
-        </section>
-
-        {/* ---- the Ledger callout ---- */}
-        <section id="ledger-callout" className="gl-ledger">
-          <div className="gl-wrap gl-ledger-grid">
-            <div>
-              {IS_LEDGER ? <>
-                <div className="gl-kicker gold">The other section · 1526 – 1947</div>
-                <h2>Nobody handed anybody freedom.</h2>
-                <p>Four hundred and twenty-one years of people were jailed, shot, starved and hanged for the thing
-                   you were born holding. That walk is on the other page — {ALL.length > 20 ? '' : 'forty-eight stations, forty-four photographs, '}public domain.
-                   This one is what a citizen does with the freedom afterwards.</p>
-                <div className="gl-cta"><a className="gl-btn-gold" href={MAIN_WALK_URL}>↩ Walk 1526 → 1947</a>
-                  <button className="gl-btn-paper" onClick={() => store.set({ ledgerOpen: true })}>Read the Ledger</button></div>
-              </> : <>
-                <div className="gl-kicker gold">The other section · 2014 – present</div>
-                <h2>A Cockroach's Questions</h2>
-                <p>The walk ends at midnight, 1947. Accountability doesn't end anywhere. In a democracy, questioning
-                   the government is not disloyalty — it is the duty this archive was built to remind you of. The
-                   Republic's Ledger documents the present era only through what the official record says: audit
-                   reports, court judgments, regulatory filings, parliamentary answers.</p>
-                <div className="gl-cta">
-                  <a className="gl-btn-gold" href={LEDGER_WALK_URL}>Walk 2014 → today →</a>
-                  <button className="gl-btn-paper" onClick={() => store.set({ ledgerOpen: true })}>Read the Ledger</button>
-                  <button className="gl-btn-paper" onClick={() => store.set({ bhaktOpen: true })}>For Andhbhakts ↗</button>
-                </div>
-              </>}
-            </div>
-            <div className="gl-facts">
-              {[[String(LEDGER_LINKS), 'Verified source links'], ['2014', 'Record begins'], ['0', 'Claims without a document']].map(([n, l]) => (
-                <div key={l}><b>{n}</b><span>{l}</span></div>
-              ))}
-            </div>
           </div>
         </section>
 

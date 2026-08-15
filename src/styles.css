@@ -237,24 +237,21 @@
   .gl-nav a:hover{color:var(--gl-ink)}
   /* hero */
   .gl-hero{position:relative;overflow:hidden;background:radial-gradient(115% 90% at 50% 108%,#f4efe0 0%,#ece5d4 46%,#e0d9c6 100%)}
-  .gl-plaza{position:absolute;left:0;right:0;bottom:0;height:230px;overflow:hidden;pointer-events:none}
-  .gl-plaza-in{position:absolute;left:50%;top:50%;width:520px;height:520px;transform:translate(-50%,-50%)}
-  .gl-plaza-in .ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%}
-  .gl-plaza-in .ring.saffron{width:91%;height:91%;border:14px solid #d98f3f;opacity:.3}
-  .gl-plaza-in .ring.green{width:85%;height:85%;border:12px solid #3f7a52;opacity:.26}
-  .gl-plaza-in .ring.thin{border:1px solid rgba(150,140,118,.55)}
-  .gl-plaza-in .ring.thin.a{width:62%;height:62%}
-  .gl-plaza-in .ring.thin.b{width:43%;height:43%}
-  /* the Chakra rises and turns: a soft ray sweep behind it, the wheel itself in navy */
-  .gl-rays{position:absolute;left:50%;top:50%;width:70%;height:70%;transform:translate(-50%,-50%);border-radius:50%;
-    background:repeating-conic-gradient(from 0deg,rgba(38,53,110,.11) 0deg 7.5deg,transparent 7.5deg 15deg);
-    -webkit-mask-image:radial-gradient(circle,transparent 26%,#000 40%,transparent 72%);
-    mask-image:radial-gradient(circle,transparent 26%,#000 40%,transparent 72%);
+  /* the Ashoka Chakra sits directly behind the hero title, as its background:
+     a large, quiet navy wheel turning slowly, with a soft ray sweep behind it */
+  .gl-hero-copy{position:relative;isolation:isolate}
+  .gl-hero-copy > *:not(.gl-chakra-bg){position:relative;z-index:1}
+  .gl-chakra-bg{position:absolute;left:50%;top:50%;width:min(720px,140%);aspect-ratio:1;
+    transform:translate(-50%,-52%);pointer-events:none;z-index:0}
+  .gl-rays{position:absolute;inset:0;border-radius:50%;
+    background:repeating-conic-gradient(from 0deg,rgba(38,53,110,.085) 0deg 7.5deg,transparent 7.5deg 15deg);
+    -webkit-mask-image:radial-gradient(circle,transparent 22%,#000 40%,transparent 70%);
+    mask-image:radial-gradient(circle,transparent 22%,#000 40%,transparent 70%);
     animation:chakraspin 90s linear infinite reverse}
-  .gl-chakra{position:absolute;left:50%;top:50%;width:30%;height:30%;transform:translate(-50%,-50%);color:var(--gl-navy);opacity:.42;
-    filter:drop-shadow(0 0 10px rgba(240,192,122,.5));animation:chakraspin 36s linear infinite}
+  .gl-chakra{position:absolute;left:50%;top:50%;width:64%;height:64%;transform:translate(-50%,-50%);color:var(--gl-navy);opacity:.13;
+    animation:chakraspin 40s linear infinite}
   @keyframes chakraspin{to{transform:translate(-50%,-50%) rotate(360deg)}}
-  .gl-hero-grid{position:relative;padding-top:80px;padding-bottom:250px;display:grid;
+  .gl-hero-grid{position:relative;padding-top:80px;padding-bottom:96px;display:grid;
     grid-template-columns:repeat(auto-fit,minmax(min(410px,100%),1fr));gap:60px;align-items:center}
   .gl-hero h1{font-size:clamp(38px,5.4vw,66px);line-height:1.03;letter-spacing:-.01em;margin-top:22px}
   .gl-range{display:flex;align-items:center;gap:14px;margin-top:22px}
@@ -398,9 +395,8 @@
   }
   @media (max-width:640px){
     .gl-wrap{padding-left:18px;padding-right:18px}
-    .gl-hero-grid{padding-top:40px;padding-bottom:210px;gap:34px}
-    .gl-plaza{height:170px}
-    .gl-plaza-in{width:400px;height:400px}
+    .gl-hero-grid{padding-top:40px;padding-bottom:56px;gap:34px}
+    .gl-chakra-bg{width:min(520px,150%)}
     .gl-band-note{text-align:left;max-width:none}
     .gl-plates{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px 14px}
     .gl-facts{border-left:none;padding-left:0;border-top:1px solid rgba(255,255,255,.2)}
