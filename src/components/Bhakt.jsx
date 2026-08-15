@@ -108,7 +108,7 @@ export default function Bhakt(){
       engine.begin(i >= 0 ? STATION_S[i] : null); }
     else location.href = LEDGER_WALK_URL + (id ? '#' + id : '');
   };
-  const walkLabel = IN_LEDGER_WALK ? (ready ? 'Walk the Vibe Corridor · 2014' : (load.msg || 'Loading the potholes…')) : 'Walk the Vibe Corridor · 2014';
+  const walkLabel = IN_LEDGER_WALK ? (ready ? 'Take the Pothole Yatra' : (load.msg || 'Loading the potholes…')) : 'Take the Pothole Yatra';
 
   return (
     <div id="bhakt" role="dialog" aria-modal="true" aria-label="For Andhbhakts">

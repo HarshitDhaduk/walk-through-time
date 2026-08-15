@@ -491,9 +491,10 @@
 .bk-switch button:hover{color:#fff6e6;background:#3a332a}
 .bk-switch .on{color:#141414;background:#FF9933;padding:8px 13px;white-space:nowrap;font-weight:600}
 .bk-nav{display:flex;align-items:center;gap:20px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
-.bk-nav a{color:#b8ac9c;text-decoration:none}
-.bk-nav a:hover{color:#fff6e6}
-.bk-nav a.saff{color:#FF9933}
+#bhakt .bk-nav a{color:#b8ac9c;text-decoration:none}
+#bhakt .bk-nav a:hover{color:#fff6e6}
+#bhakt .bk-nav a.saff{color:#FF9933}
+#bhakt .bk-switch a{color:#b8ac9c}
 .bk-hero{background:#FF9933;border-bottom:4px solid #141414;position:relative;overflow:hidden}
 .bk-hero-in{padding-top:74px;padding-bottom:78px;position:relative}
 .bk-badge{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#141414;background:#fff6e6;
