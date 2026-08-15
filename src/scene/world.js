@@ -337,6 +337,48 @@ function makePlazaTexture(){
   return cv;
 }
 
+/* standing water in the potholes: a glossy, slightly sunken disc sits
+   in each pothole of every 8 m road tile — it mirrors the smog sky and
+   the lamps, and the engine ripples it. Positions come straight from
+   the painted potholes' canvas coordinates (512-px tile ↔ 8 m × road) */
+let potholeWater = null;
+function buildPotholeWater(){
+  const HOLES = [[160,250,40,26],[400,430,30,20],[80,470,22,14]];   // canvas x,y,rx,ry (see makeBrokenRoadTexture)
+  const geo = new THREE.CircleGeometry(1, 20);
+  // a tiny sky-gradient environment so the water actually mirrors the smog
+  // above it (metal without an envMap reflects nothing and reads as tar)
+  const envCanvas = document.createElement('canvas'); envCanvas.width = 32; envCanvas.height = 32;
+  const ec = envCanvas.getContext('2d');
+  const eg = ec.createLinearGradient(0, 0, 0, 32); eg.addColorStop(0, '#5a5048'); eg.addColorStop(.5, '#a08e78'); eg.addColorStop(1, '#3a3430');
+  ec.fillStyle = eg; ec.fillRect(0, 0, 32, 32);
+  const envTex = new THREE.CanvasTexture(envCanvas); envTex.mapping = THREE.EquirectangularReflectionMapping;
+  const mat = new THREE.MeshStandardMaterial({ color:'#c9d3dc', roughness:.05, metalness:.95,
+    envMap: envTex, envMapIntensity:1.6, transparent:true, opacity:.94 });
+  const items = [];
+  const END = FLAG_S - 34;
+  for (let tile = 1; tile * 8 < END; tile++){
+    HOLES.forEach(([cx, cy, rx, ry], k) => {
+      if (tile % 2 === 1 && k === 1) return;               // not every hole in every tile — some dried
+      const s = tile * 8 + (1 - cy / 512) * 8;              // canvas y=0 is the far (v=1) end of the tile
+      if (nearStation(s, 2.2)) return;                      // never under a year plate
+      const w = walkWidth(s);
+      const f = 1 - (cx / 512) * 2;                          // u=0 ↔ f=-1 … so f = 1 - 2u  → x across the road
+      items.push({ s, f: -f, rx: rx / 512 * w * 1.02, ry: ry / 512 * 8 * 1.02 });   // fills the hole to its rim
+    });
+  }
+  const mesh = new THREE.InstancedMesh(geo, mat, items.length);
+  const d = new THREE.Object3D();
+  items.forEach((it, i) => {
+    pointAt(it.s, _p); tangentAt(it.s, _t); sideAt(it.s, _side);
+    d.position.set(_p.x + _side.x * it.f * walkWidth(it.s)/2, .012, _p.z + _side.z * it.f * walkWidth(it.s)/2);
+    d.rotation.set(-Math.PI/2, 0, -Math.atan2(_t.x, _t.z));
+    d.scale.set(it.rx, it.ry, 1);
+    d.updateMatrix(); mesh.setMatrixAt(i, d.matrix);
+  });
+  mesh.instanceMatrix.needsUpdate = true;
+  scene.add(mesh);
+  potholeWater = { mesh, mat, n: items.length };
+}
 function buildFloor(){
   const rows = Math.ceil(FLAG_S + 55), cols = 4;
   const pos = [], col = [], idx = [], nrm = [], uv = [];
@@ -371,6 +413,7 @@ function buildFloor(){
   floorTex.anisotropy = 8;
   scene.add(new THREE.Mesh(g, new THREE.MeshStandardMaterial({
     map: floorTex, vertexColors: true, roughness: .92 })));
+  if (SATIRE) buildPotholeWater();
   // marble plaza with the Ashoka Chakra medallion under the flag
   const plazaTex = new THREE.CanvasTexture(makePlazaTexture());
   plazaTex.colorSpace = THREE.SRGBColorSpace; plazaTex.anisotropy = 8;
@@ -846,5 +889,6 @@ function updateParticles(time){
 }
 
   return { hemi, sun, pool, sky, sunDisc, clouds, applyEnv, buildFloor, buildArchitecture,
-           buildParticles, updateParticles, walkWidth };
+           buildParticles, updateParticles, walkWidth,
+           get potholeWater(){ return potholeWater; } };
 }

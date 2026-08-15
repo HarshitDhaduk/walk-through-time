@@ -42,9 +42,10 @@ function Card({ stationIdx }){
       <h3>{st.title}</h3>
       <p className="summary">{st.summary}</p>
       <p className="details">{st.details}</p>
+      {/* the official record lives behind "Read more" — the summary stays uncrowded */}
       {docs && (
-        <div className="card-docs" onClick={e => e.stopPropagation()}>
-          <b>The official record</b>
+        <div className="card-docs details" onClick={e => e.stopPropagation()}>
+          <b>The official record · {docs.records.filter(r => r.url).length} documents</b>
           <ul>
             {docs.records.filter(r => r.url).map((r, k) => (
               <li key={k}>

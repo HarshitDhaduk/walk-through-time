@@ -197,6 +197,7 @@ const _look = new THREE.Vector3(), _camP = new THREE.Vector3(), _aerial = new TH
       _orbit = new THREE.Vector3(), _flagLook = new THREE.Vector3(), _explore = new THREE.Vector3();
 let lastS = 0, walkPhase = 0;
 let orbitT0 = null, orbitA0 = 0;     // finale orbit entry anchor
+const _WATER_DEEP = new THREE.Color('#1c2630');
 const clock = new THREE.Clock();
 
 function tick(){
@@ -327,6 +328,14 @@ function tick(){
   }
   world.sky.position.copy(camera.position);       // the dome always surrounds the walker
   if (!REDUCED) world.clouds.rotation.y = state.time * .0045;     // slow drift
+  // the pothole water catches the sky: its tint follows the fog colour,
+  // and a slow shimmer keeps it reading as liquid rather than paint
+  const pw = world.potholeWater;
+  if (pw){
+    pw.mat.color.copy(scene.fog.color).lerp(_WATER_DEEP, .25);           // sky-coloured, a little deep
+    pw.mat.roughness = REDUCED ? .06 : .04 + Math.sin(state.time * 1.7) * .025;   // the surface breathes
+    pw.mat.emissive.copy(scene.fog.color).multiplyScalar(.16 + (REDUCED ? 0 : Math.sin(state.time * 2.3) * .04));
+  }
   world.sun.position.set(_camP.x + 18, 32, _camP.z + 12);
   world.sun.target.position.set(_camP.x, 0, _camP.z - 8);
   world.sunDisc.position.set(_camP.x + 135, 205, _camP.z + 90);   // the visible sun, same bearing
