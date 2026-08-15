@@ -12,7 +12,7 @@ export default function Toggles(){
         </button>
       )}
       <button id="tour-toggle" aria-pressed={tourOn}
-              title="Guided walk through all 45 stations"
+              title="Guided walk through every station"
               onClick={() => engine.setTour(!tourOn)}>
         {tourOn ? '❚❚ Tour' : '▶ Tour'}
       </button>
