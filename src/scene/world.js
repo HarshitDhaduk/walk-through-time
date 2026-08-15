@@ -30,8 +30,22 @@ const E_LIGHT = [C('#b0bcc3'),C('#42556b'),C('#cdd8de'),C('#d5e0ea'),C('#565e66'
 const E_BRIGHT= [C('#d5e0e6'),C('#5a7fa8'),C('#e8f0f4'),C('#f0f6fa'),C('#8b9585'),.88,C('#ffffff'),1.65,16,132];
 const E_PLAZA = [C('#e9f1f5'),C('#7fb0dd'),C('#fdf6e8'),C('#ffffff'),C('#cfe0d2'),1.00,C('#fff6e0'),2.00,20,170];
 const E_PLAZA2= [C('#eef4f7'),C('#8ab8e2'),C('#fdf8ec'),C('#ffffff'),C('#d5e4d8'),1.00,C('#fff8e6'),2.05,20,175];
+// the 2014→today ending: not a plaza at dawn but a city under smog —
+// AQI-brown sky, sun a dim coin, visibility down to a few plates
+const E_SMOG  = [C('#8a7c6a'),C('#4a4038'),C('#a08e78'),C('#b8a894'),C('#3a3430'),.42,C('#c99a6a'),0.55, 5, 38];
+const E_SMOG2 = [C('#6e6256'),C('#332c27'),C('#84745f'),C('#9a8b78'),C('#2c2723'),.36,C('#b8865a'),0.42, 4, 30];
 // Keyframes positioned relative to the stations they belong to
-const ENV_KEYS = [
+const ENV_KEYS = SATIRE ? [
+  [0,                       ...E_DUST],
+  [S_TAJ,                   ...E_SLATE],
+  [(S_TRANS + S_BRIT) / 2,  ...E_SLATE2],
+  [S_REV - 3,               ...E_RED],
+  [S_REV + 10,              ...E_RED2],
+  [S_CROWNST + 12,          ...E_SLATE3],
+  [FLAG_S - 60,             ...E_SMOG],
+  [FLAG_S - 12,             ...E_SMOG2],
+  [FLAG_S + 85,             ...E_SMOG2],
+] : [
   [0,                       ...E_DAWN],
   [S_TAJ,                   ...E_GOLD],
   [S_TRANS - 12,            ...E_GOLD2],
@@ -158,8 +172,8 @@ const FLOOR_KEYS = SATIRE ? [
   [(S_TRANS+S_BRIT)/2, C('#6e5f52')], [S_BRIT + 8,  C('#5c5049')],
   [S_REV - 9,       C('#584d46')], [S_REV - 4,      C('#3a2b22')],
   [S_REV + 6,       C('#3f2f26')], [S_CROWNST + 7,  C('#6a6058')],
-  [S_FREE + 65,     C('#8a8178')], [FLAG_S - 56,    C('#a89f92')],
-  [FLAG_S - 14,     C('#d8d0c2')], [FLAG_S + 85,    C('#f0ead9')],
+  [S_FREE + 65,     C('#8a8178')], [FLAG_S - 56,    C('#6b625a')],
+  [FLAG_S - 14,     C('#4a443f')], [FLAG_S + 85,    C('#3f3a36')],   // the plaza, unswept
 ] : [
   [0,               C('#c79d61')], [MUGHAL_END,     C('#cfa76b')],
   [(S_TRANS+S_BRIT)/2, C('#93866f')], [S_BRIT + 8,  C('#6a7680')],
@@ -304,6 +318,22 @@ function makePlazaTexture(){
   for (let i = 0; i < 24; i++){ const a = i*Math.PI/12;
     c.beginPath(); c.moveTo(cx, cx); c.lineTo(cx + 122*Math.cos(a), cx + 122*Math.sin(a)); c.stroke(); }
   c.fillStyle = '#26356e'; c.beginPath(); c.arc(cx, cx, 22, 0, 7); c.fill();
+  if (SATIRE){
+    // the same plaza, years later: grime, a broken chakra, tyre marks, and
+    // the rings scuffed to nothing on one side
+    c.fillStyle = 'rgba(40,34,28,.55)'; c.fillRect(0,0,1024,1024);
+    for (let i = 0; i < 40; i++){ c.strokeStyle = `rgba(20,16,12,${.2+Math.random()*.3})`; c.lineWidth = 6 + Math.random()*10;
+      c.beginPath(); c.moveTo(Math.random()*1024, 0); c.bezierCurveTo(Math.random()*1024, 400, Math.random()*1024, 700, Math.random()*1024, 1024); c.stroke(); }
+    // cracks through the medallion
+    c.strokeStyle = 'rgba(15,12,10,.9)'; c.lineWidth = 5;
+    for (let i = 0; i < 7; i++){ let x = cx + (Math.random()-.5)*60, y = cx + (Math.random()-.5)*60; c.beginPath(); c.moveTo(x, y);
+      for (let k = 0; k < 8; k++){ x += (Math.random()-.5)*140; y += (Math.random()-.5)*140; c.lineTo(x, y); } c.stroke(); }
+    // four spokes of the chakra scoured away
+    c.fillStyle = 'rgba(48,42,36,.95)'; c.beginPath(); c.moveTo(cx, cx); c.arc(cx, cx, 140, .3, 1.35); c.closePath(); c.fill();
+    // a "NO ENTRY" stencil and a puddle
+    c.save(); c.translate(cx+250, cx-260); c.rotate(-.35); c.fillStyle='rgba(200,40,40,.7)'; c.font='700 64px Impact, "Arial Black", sans-serif'; c.textAlign='center'; c.fillText('NO ENTRY', 0, 0); c.restore();
+    c.fillStyle = 'rgba(70,90,110,.55)'; c.beginPath(); c.ellipse(cx-300, cx+300, 150, 80, .4, 0, 7); c.fill();
+  }
   return cv;
 }
 
@@ -718,6 +748,7 @@ function buildSatireWayside(){
     });
     const banner = new THREE.Mesh(new THREE.PlaneGeometry(WALK_W + .4, 1.0, 12, 1), inaugMat);
     banner.position.set(0, 4.1, 0);
+    banner.rotation.y = Math.PI;               // face the walker approaching from +z so the text reads left-to-right
     // a lazy sag in the middle
     const pos = banner.geometry.attributes.position;
     for (let i = 0; i < pos.count; i++){ const x = pos.getX(i); pos.setY(i, pos.getY(i) - Math.cos(x / (WALK_W/2) * 1.4) * .22); }

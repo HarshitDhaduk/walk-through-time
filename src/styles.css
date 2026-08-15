@@ -224,7 +224,6 @@
   .gl-btn-gold:hover{background:#ffd694;transform:translateY(-1px)}
   /* masthead */
   .gl-mast{position:sticky;top:0;z-index:40;background:rgba(217,208,193,.96);backdrop-filter:blur(8px)}
-  .gl-mast-in{padding-top:12px;padding-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
   .gl-brand{display:flex;align-items:center;gap:13px;font-size:15.5px;letter-spacing:.02em;color:var(--gl-navy);white-space:nowrap}
   .gl-switch{display:flex;align-items:center;padding:3px;background:#cfc2ab;border:1px solid var(--gl-rule);border-radius:2px;
     font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase}
@@ -471,7 +470,15 @@
 #bhakt a:hover{color:#8c3a00}
 .bk-wrap{max-width:1200px;margin:0 auto;padding-left:26px;padding-right:26px}
 .bk-mast{position:sticky;top:0;z-index:40;background:#141414;color:#fff6e6;border-bottom:4px solid #FF9933}
-.bk-mast-in{padding-top:12px;padding-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+/* both mastheads share one layout: brand · switch · nav, in a 3-column grid */
+.bk-mast-in,.gl-mast-in{padding-top:12px;padding-bottom:12px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:18px}
+.bk-mast-in > :nth-child(1),.gl-mast-in > :nth-child(1){justify-self:start}
+.bk-mast-in > :nth-child(3),.gl-mast-in > :nth-child(3){justify-self:end}
+.bk-nav{white-space:nowrap}
+@media (max-width:1040px){
+  .bk-mast-in,.gl-mast-in{grid-template-columns:1fr auto;grid-template-rows:auto auto}
+  .bk-mast-in > :nth-child(3),.gl-mast-in > :nth-child(3){grid-column:1 / -1;justify-self:start}
+}
 .bk-brand{display:flex;align-items:baseline;gap:11px;white-space:nowrap}
 .bk-brand .serif{font-family:var(--serif);font-size:15.5px}
 .bk-brand .mono{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em}
@@ -579,7 +586,13 @@
 .bk-plate{display:block;text-align:left;background:#fff;color:#141414;border:3px solid #141414;box-shadow:6px 6px 0 #141414;padding:10px;cursor:pointer;
   font-family:inherit;transform:rotate(var(--tilt,0deg));transition:transform .18s}
 .bk-plate:hover{transform:rotate(0deg) translateY(-4px)}
-.bk-plate .pic{display:block;border:3px solid #141414;overflow:hidden}
+.bk-plate .pic{display:block;border:3px solid #141414;overflow:hidden;position:relative;
+  /* torn along the top and one corner, like a poster ripped off a wall */
+  clip-path:polygon(0 6%,4% 0,9% 5%,15% 1%,22% 6%,29% 2%,36% 7%,44% 1%,52% 6%,60% 2%,68% 7%,76% 2%,84% 6%,92% 1%,100% 5%,
+    100% 78%,96% 84%,100% 89%,95% 94%,98% 100%,0 100%)}
+.bk-plate .pic::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.35) 41%,transparent 42.5%,transparent 60%,rgba(255,255,255,.28) 61%,transparent 62%);
+  mix-blend-mode:screen}
 .bk-plate img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;filter:contrast(1.05) saturate(.9)}
 .bk-plate .acc{display:block;height:4px;margin:10px 0 8px}
 .bk-plate .yr{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:#8c3a00}

@@ -96,13 +96,7 @@ export default function Landing(){
   // one corridor at a time: the chosen era's page replaces the previous one
   const bands = ERAS.map((e, k) => ({ ...e, k, plates: PLATES.filter(p => p.zone === k), open: true }))
     .filter(b => b.k === era);
-  const pickEra = k => {
-    setEra(k);
-    setTimeout(() => {
-      const el = document.getElementById('band-' + k);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 30);
-  };
+  const pickEra = k => setEra(k);   // stays put — the rail is the switcher, no jump
 
   return (
     <div id="landing" role="dialog" aria-label="Welcome" className={started ? 'hidden' : ''}>

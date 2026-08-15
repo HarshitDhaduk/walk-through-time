@@ -6,6 +6,8 @@ import { MOBILE, WALK_W, smooth, pointAt, sideAt, tangentAt, FLAG_POS,
 import { TIMELINE, STATION_S, FLAG_S } from '../data/timeline.js';
 import { PHOTOS } from '../data/photos.js';
 import { stationArtCanvas, AW, AH } from '../art/vignettes.js';
+import { WALK } from '../data/walk.js';
+const SATIRE = WALK.key === 'ledger';   // the 2014→today corridor: torn frames, dark finale
 
 export function createStations(scene){
 
@@ -50,6 +52,34 @@ const texLoader = new THREE.TextureLoader();
 texLoader.setCrossOrigin('anonymous');
 const ART_PICKS = [];                 // every framed picture, clickable in 3D
 
+/* the 2014→today corridor's pictures hang torn: rusted, chipped moulding
+   with a corner gone, cracked glass, and the print itself ripped at
+   one edge — a gallery nobody has maintained since the ribbon was cut */
+const RIP_MAT = SATIRE ? new THREE.MeshStandardMaterial({ color:'#7a4a2c', roughness:.9, metalness:.25 }) : null;
+const CRACK_TEX = SATIRE ? canvasTexture(256, 256, (c, w, h) => {
+  c.clearRect(0,0,w,h);
+  c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 1.6;
+  const ox = 70 + Math.random()*40, oy = 60 + Math.random()*40;      // impact point
+  for (let i = 0; i < 9; i++){                                          // radial cracks
+    let x = ox, y = oy, a = i * .7 + Math.random()*.4;
+    c.beginPath(); c.moveTo(x, y);
+    for (let k = 0; k < 6; k++){ a += (Math.random()-.5)*.6; x += Math.cos(a)*22; y += Math.sin(a)*22; c.lineTo(x, y); }
+    c.stroke();
+  }
+  c.lineWidth = 1; c.strokeStyle = 'rgba(255,255,255,.45)';
+  for (let r = 14; r < 60; r += 14){ c.beginPath(); c.arc(ox, oy, r, Math.random()*2, Math.random()*2 + 3); c.stroke(); }
+}) : null;
+const RIP_MASK = SATIRE ? canvasTexture(256, 256, (c, w, h) => {   // alpha: white kept, black torn away
+  c.fillStyle = '#fff'; c.fillRect(0,0,w,h);
+  c.fillStyle = '#000';
+  // torn bottom-right corner + a bite out of the top edge
+  c.beginPath(); c.moveTo(w, h*.62);
+  for (let i = 0; i <= 10; i++){ c.lineTo(w - i*(w*.06) + (Math.random()-.5)*8, h*.62 + i*(h*.038) + (Math.random()-.5)*10); }
+  c.lineTo(w*.4, h); c.lineTo(w, h); c.closePath(); c.fill();
+  c.beginPath(); c.moveTo(w*.3, 0);
+  for (let i = 0; i <= 6; i++){ c.lineTo(w*.3 + i*(w*.045), (i%2 ? 14 : 4) + Math.random()*6); }
+  c.lineTo(w*.57, 0); c.closePath(); c.fill();
+}) : null;
 function artPanel(st, boxW, boxH, y, z, gilt){
   const g = new THREE.Group(); g.position.set(0, y, z);
   const board = new THREE.Mesh(new THREE.PlaneGeometry(boxW + .22, boxH + .22),
@@ -62,23 +92,44 @@ function artPanel(st, boxW, boxH, y, z, gilt){
   vigTex.colorSpace = THREE.SRGBColorSpace;
   const picMat = new THREE.MeshStandardMaterial({
     map: vigTex, emissiveMap: vigTex, roughness:.6,
-    emissive: 0xffffff, emissiveIntensity: .42 });
+    emissive: 0xffffff, emissiveIntensity: .42,
+    ...(SATIRE ? { alphaMap: RIP_MASK, transparent: true, alphaTest: .5 } : {}) });
   const pic = new THREE.Mesh(UNIT_PLANE, picMat); pic.position.z = .012; g.add(pic);
   ART_PICKS.push({ mesh: pic, st });
-  const moulding = gilt ? MAT.gold : MAT.iron;
+  const moulding = SATIRE ? RIP_MAT : (gilt ? MAT.gold : MAT.iron);
   const bars = [0,1,2,3].map(() => { const b = new THREE.Mesh(UNIT_PLANE, moulding);
     b.position.z = .022; g.add(b); return b; });
   const glass = new THREE.Mesh(UNIT_PLANE, GLASS_MAT); glass.position.z = .05; g.add(glass);
+  let cracks = null, chips = null;
+  if (SATIRE){
+    // cracked glass over the print, and the moulding chipped: short dark
+    // gaps along the bars, plus one corner missing entirely (bar 3 is shortened)
+    cracks = new THREE.Mesh(UNIT_PLANE, new THREE.MeshBasicMaterial({ map: CRACK_TEX, transparent: true,
+      opacity: .85, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    cracks.position.z = .055; g.add(cracks);
+    chips = [0,1,2].map(() => { const m = new THREE.Mesh(UNIT_PLANE,
+      new THREE.MeshStandardMaterial({ color:'#181310', roughness:.95 })); m.position.z = .026; g.add(m); return m; });
+  }
 
   const layout = aspect => {
     let w = boxW, h = w / aspect;
     if (h > boxH){ h = boxH; w = h * aspect; }
     pic.scale.set(w, h, 1); glass.scale.set(w, h, 1);
+    if (cracks) cracks.scale.set(w, h, 1);
     const t = .05;
     bars[0].scale.set(w + 2*t, t, 1); bars[0].position.set(0,  h/2 + t/2, .022);
     bars[1].scale.set(w + 2*t, t, 1); bars[1].position.set(0, -h/2 - t/2, .022);
     bars[2].scale.set(t, h, 1);       bars[2].position.set(-w/2 - t/2, 0, .022);
-    bars[3].scale.set(t, h, 1);       bars[3].position.set( w/2 + t/2, 0, .022);
+    if (SATIRE){
+      // right bar stops short of the top: the corner is gone
+      bars[3].scale.set(t, h * .72, 1); bars[3].position.set( w/2 + t/2, -h * .14, .022);
+      bars[3].rotation.z = .035;                                            // and hangs slightly loose
+      chips[0].scale.set(.16, t + .01, 1); chips[0].position.set(-w*.28, h/2 + t/2, .026);
+      chips[1].scale.set(.11, t + .01, 1); chips[1].position.set( w*.18, -h/2 - t/2, .026);
+      chips[2].scale.set(t + .01, .14, 1); chips[2].position.set(-w/2 - t/2, -h*.22, .026);
+    } else {
+      bars[3].scale.set(t, h, 1);       bars[3].position.set( w/2 + t/2, 0, .022);
+    }
   };
   layout(AW / AH);
   let photoTex = null;
@@ -176,8 +227,52 @@ for (let x = -1.62; x <= 1.63; x += .27){
 }
 const dentilGeo = mergeGeometries(dentilParts);
 
+/* ---- the 2014→today frame: a stained concrete slab, cracked through,
+   the picture hung crooked from one bent rebar hook, graffiti at the
+   foot. Every era in that corridor uses this — decay is the era. */
+const STAIN_TEX = SATIRE ? canvasTexture(256, 384, (c, w, h) => {
+  c.fillStyle = '#9d9891'; c.fillRect(0,0,w,h);
+  for (let i = 0; i < 1400; i++){ c.fillStyle = `rgba(40,36,32,${Math.random()*.16})`; c.fillRect(Math.random()*w, Math.random()*h, 3, 3); }
+  // water stains running down from the top edge, and damp at the base
+  for (let i = 0; i < 6; i++){ const x = 20 + Math.random()*(w-40), ww = 10 + Math.random()*26;
+    const g = c.createLinearGradient(0, 0, 0, 120 + Math.random()*160); g.addColorStop(0, 'rgba(60,50,40,.55)'); g.addColorStop(1, 'rgba(60,50,40,0)');
+    c.fillStyle = g; c.fillRect(x, 0, ww, 300); }
+  const g2 = c.createLinearGradient(0, h-110, 0, h); g2.addColorStop(0,'rgba(30,40,30,0)'); g2.addColorStop(1,'rgba(30,40,30,.6)');
+  c.fillStyle = g2; c.fillRect(0, h-110, w, 110);
+  // a diagonal crack
+  c.strokeStyle = 'rgba(25,20,16,.8)'; c.lineWidth = 3; c.beginPath(); c.moveTo(w*.15, h*.1);
+  let x = w*.15, y = h*.1; for (let k = 0; k < 8; k++){ x += 18 + Math.random()*10; y += 34 + (Math.random()-.5)*20; c.lineTo(x, y); } c.stroke();
+  // graffiti at the foot
+  c.save(); c.translate(w*.5, h*.9); c.rotate(-.06); c.fillStyle = 'rgba(200,40,40,.85)'; c.font = '700 26px Impact, "Arial Black", sans-serif';
+  c.textAlign = 'center'; c.fillText(['ROAD KAHAN HAI?','ACHHE DIN?','KYA HUA?','WHERE IS DATA'][Math.floor(Math.random()*4)], 0, 0); c.restore();
+}) : null;
+function satireFrame(st){
+  const grp = new THREE.Group();
+  const slabMat = new THREE.MeshStandardMaterial({ map: STAIN_TEX, roughness:.95 });
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(2.7, 3.6, .22), slabMat); slab.position.y = 1.95; grp.add(slab);
+  // top-right corner sheared off (a dark wedge over the slab face)
+  const shear = new THREE.Mesh(new THREE.BoxGeometry(.7, .55, .24), new THREE.MeshStandardMaterial({ color:'#5b5754', roughness:1 }));
+  shear.position.set(1.05, 3.5, 0); shear.rotation.z = .5; grp.add(shear);
+  const foot = new THREE.Mesh(new THREE.BoxGeometry(3.0, .3, .9), new THREE.MeshStandardMaterial({ color:'#7c756e', roughness:1 }));
+  foot.position.y = .15; grp.add(foot);
+  // rusted rebar hook the picture hangs from — and it hangs crooked
+  const rebar = new THREE.MeshStandardMaterial({ color:'#7a4a2c', roughness:.9, metalness:.25 });
+  const hook = new THREE.Mesh(new THREE.TorusGeometry(.09,.02,6,12, Math.PI), rebar); hook.position.set(.05, 3.32, .14); grp.add(hook);
+  const wire = new THREE.Mesh(new THREE.CylinderGeometry(.008,.008,.42,5), rebar); wire.position.set(.03, 3.1, .14); wire.rotation.z = .1; grp.add(wire);
+  const art = artPanel(st, 2.0, 2.15, 1.85, .12, false);
+  art.grp.rotation.z = -.05;                                        // crooked
+  grp.add(art.grp);
+  // a peeling notice pasted at the foot: "PUBLIC NOTICE" with the rest weathered off
+  const notice = new THREE.Mesh(new THREE.PlaneGeometry(.7,.45), new THREE.MeshStandardMaterial({
+    map: canvasTexture(140,90,(c,w,h) => { c.fillStyle='#e9e4da'; c.fillRect(0,0,w,h); c.fillStyle='#141414'; c.font='700 16px monospace'; c.textAlign='center';
+      c.fillText('PUBLIC NOTICE', w/2, 26); c.fillStyle='#8a8178'; for (let y=44;y<h;y+=10) c.fillRect(14, y, w-28-Math.random()*40, 4);
+      c.fillStyle='rgba(0,0,0,.35)'; c.beginPath(); c.moveTo(w,h); c.lineTo(w-40,h); c.lineTo(w,h-30); c.closePath(); c.fill(); }), roughness:.85 }));
+  notice.position.set(-.85, .62, .12); notice.rotation.z = .12; grp.add(notice);
+  return { grp, anchorY: 3.0, art };
+}
 /* ---- era-styled frames (each holds one glazed picture) ---- */
 function mughalFrame(st){
+  if (SATIRE) return satireFrame(st);
   const grp = new THREE.Group();
   const shape = new THREE.Shape();
   shape.moveTo(-1.7,0); shape.lineTo(-1.7,4.35); shape.lineTo(1.7,4.35); shape.lineTo(1.7,0); shape.closePath();
@@ -197,6 +292,7 @@ function mughalFrame(st){
   return { grp, anchorY: 3.1, art };
 }
 function britishFrame(st){
+  if (SATIRE) return satireFrame(st);
   const grp = new THREE.Group();
   const mk = (g, m, x, y, z) => { const q = new THREE.Mesh(g, m); q.position.set(x, y, z); grp.add(q); return q; };
   mk(new THREE.BoxGeometry(3.9,.35,1.0), MAT.slate, 0, .17, 0);                       // plinth
@@ -214,6 +310,7 @@ function britishFrame(st){
   return { grp, anchorY: 3.3, art };
 }
 function freedomFrame(st){
+  if (SATIRE) return satireFrame(st);
   const grp = new THREE.Group();
   const base = new THREE.Mesh(new THREE.BoxGeometry(2.8,.5,1.1), MAT.white); base.position.y=.25; grp.add(base);
   const slab = new THREE.Mesh(new THREE.BoxGeometry(2.5,3.1,.18), new THREE.MeshStandardMaterial({
@@ -1701,7 +1798,95 @@ function buildIndiaGate(){
 /* ---- 1947 finale: tricolour with flag-wave shader + midnight clock ---- */
 let flagUniforms = null;
 let finaleFx = null;     // celebration balloons, animated by the engine
+
+/* ---- the 2014→today ending: a dark day -----------------------------
+   No flag. The pole is there — the flag is not; the halyard hangs.
+   Under smog: a plaza of loudspeakers turned to face the walker with
+   their cones sealed shut, a "SILENCE ZONE" gantry, CCTV on every
+   mast, a chained microphone stand, a burnt-out car, and on the marble
+   the citizens' own words — chalked, then hosed, then chalked again.
+   The camera still circles: there is simply nothing raised at the
+   centre to salute. The montage still plays — every plate had papers. */
+function buildDarkFinale(){
+  const g = new THREE.Group();
+  const iron  = new THREE.MeshStandardMaterial({ color:'#3a3a3c', roughness:.6, metalness:.5 });
+  const rust  = new THREE.MeshStandardMaterial({ color:'#6e4a2c', roughness:.9, metalness:.25 });
+  const grey  = new THREE.MeshStandardMaterial({ color:'#5b5754', roughness:1 });
+  const dark  = new THREE.MeshStandardMaterial({ color:'#1a1a1c', roughness:.9 });
+  flagUniforms = { uTime:{value:0}, uMap:{value:null} };          // the engine ticks it; nothing renders it
+  finaleFx = { balloons: [] };                                    // no celebration
+
+  // the flagpole — bare. Halyard flapping loose against it; the truck at the top is missing.
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.07,.1,7.5,10), iron); pole.position.y = 3.75; g.add(pole);
+  const halyard = new THREE.Mesh(new THREE.CylinderGeometry(.008,.008,6.2,4), rust); halyard.position.set(.14, 4.0, .05); halyard.rotation.z = .02; g.add(halyard);
+  const bracket = new THREE.Mesh(new THREE.BoxGeometry(.3,.06,.06), rust); bracket.position.set(.15, 7.35, 0); bracket.rotation.z = -.4; g.add(bracket);
+  // the base: same stepped octagon, cracked, one step broken away
+  [[2.2,.22,0],[1.7,.2,.22],[1.25,.18,.42]].forEach(([r,h,y0], i) => {
+    const s2 = new THREE.Mesh(new THREE.CylinderGeometry(r, r+.18, h, 8, 1, false, 0, i === 1 ? Math.PI * 1.7 : Math.PI * 2), grey);
+    s2.position.y = y0 + h/2; g.add(s2);
+  });
+  // a plaque at the foot, its lettering torn off — you can read the ghost of it
+  const plaque = new THREE.Mesh(new THREE.BoxGeometry(1.1,.5,.06), new THREE.MeshStandardMaterial({
+    map: canvasTexture(256,120,(c,w,h) => { c.fillStyle='#4a4038'; c.fillRect(0,0,w,h);
+      c.fillStyle='rgba(120,100,70,.35)'; c.font='700 26px Georgia'; c.textAlign='center'; c.fillText('WE, THE PEOPLE', w/2, 52);
+      c.fillStyle='#4a4038'; for (let i=0;i<9;i++) c.fillRect(20+i*26, 30, 12+Math.random()*10, 32);   // letters prised off
+      c.font='16px monospace'; c.fillStyle='rgba(180,160,130,.6)'; c.fillText('(under revision)', w/2, 96); }), roughness:.8 }));
+  plaque.position.set(0, .95, 1.3); plaque.rotation.x = -.35; g.add(plaque);
+
+  // ring of loudspeakers on masts, cones turned toward the walker, sealed with plates
+  const hornGeo = new THREE.ConeGeometry(.28,.6,12,1,true); hornGeo.rotateX(Math.PI/2);
+  const sealGeo = new THREE.CircleGeometry(.29, 12);
+  for (let i = 0; i < 8; i++){
+    const a = i * Math.PI * 2 / 8 + Math.PI/8;
+    if (Math.abs(((a - Math.PI/2 + Math.PI) % (Math.PI*2)) - Math.PI) < .45) continue;   // the gateway stays open
+    const x = Math.cos(a) * 7.2, z = Math.sin(a) * 7.2;
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(.06,.08,4.6,8), iron); mast.position.set(x, 2.3, z); g.add(mast);
+    const horn = new THREE.Mesh(hornGeo, iron); horn.position.set(x, 4.5, z); horn.lookAt(0, 4.5, 0); g.add(horn);
+    const seal = new THREE.Mesh(sealGeo, dark); seal.position.copy(horn.position); seal.lookAt(0, 4.5, 0);
+    seal.translateZ(.31); g.add(seal);
+    // a camera on each mast, all pointed at the plaza's centre
+    const cam = new THREE.Mesh(new THREE.BoxGeometry(.18,.12,.3), dark); cam.position.set(x, 3.6, z); cam.lookAt(0, 1.6, 0); g.add(cam);
+    const led = new THREE.Mesh(new THREE.SphereGeometry(.02,6,5), new THREE.MeshBasicMaterial({ color:'#ff2020', toneMapped:false }));
+    led.position.copy(cam.position); led.lookAt(0,1.6,0); led.translateZ(.16); g.add(led);
+  }
+  // the SILENCE ZONE gantry across the gateway the walker enters through
+  const gTex = canvasTexture(512,96,(c,w,h) => { c.fillStyle='#141414'; c.fillRect(0,0,w,h); c.fillStyle='#ffd166'; c.font='700 44px Georgia'; c.textAlign='center';
+    c.fillText('SILENCE ZONE', w/2, 62); c.font='16px monospace'; c.fillStyle='#b8ac9c'; c.fillText('questions strictly prohibited', w/2, 86); });
+  const gantry = new THREE.Group(); gantry.position.set(0, 0, 8.6);
+  [-2.2, 2.2].forEach(x => { const p = new THREE.Mesh(new THREE.CylinderGeometry(.08,.1,4.2,8), iron); p.position.set(x, 2.1, 0); gantry.add(p); });
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(4.6, .8, .08), new THREE.MeshStandardMaterial({ map:gTex, roughness:.85 }));
+  beam.position.set(0, 3.9, 0); beam.rotation.y = Math.PI; gantry.add(beam);
+  g.add(gantry);
+  // a microphone stand, chained to the base
+  const stand = new THREE.Mesh(new THREE.CylinderGeometry(.02,.03,1.5,8), iron); stand.position.set(-2.4, .75, 1.6); g.add(stand);
+  const sbase = new THREE.Mesh(new THREE.CylinderGeometry(.22,.26,.05,12), iron); sbase.position.set(-2.4, .03, 1.6); g.add(sbase);
+  const mic = new THREE.Mesh(new THREE.CapsuleGeometry(.05,.16,4,8), iron); mic.position.set(-2.4, 1.6, 1.62); mic.rotation.x = .3; g.add(mic);
+  for (let k = 0; k < 8; k++){ const link = new THREE.Mesh(new THREE.TorusGeometry(.05,.012,6,10), rust);
+    link.position.set(-2.4 + k*.14, 1.15 - k*.06, 1.6 + k*.05); link.rotation.y = k * .8; link.rotation.x = k * .4; g.add(link); }
+  const lock = new THREE.Mesh(new THREE.BoxGeometry(.12,.16,.06), rust); lock.position.set(-1.3, .68, 2.0); g.add(lock);
+  // a burnt-out car at the plaza's edge, and a toppled hoarding
+  const car = new THREE.Group(); car.position.set(6.5, 0, -4.5); car.rotation.y = .7;
+  const shell = new THREE.Mesh(new THREE.BoxGeometry(3.6, .9, 1.7), dark); shell.position.y = .55; car.add(shell);
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.0, .7, 1.5), dark); cabin.position.set(-.2, 1.35, 0); car.add(cabin);
+  [[-1.2,.9],[1.2,.9],[-1.2,-.9],[1.2,-.9]].forEach(([x,z]) => { const w = new THREE.Mesh(new THREE.TorusGeometry(.32,.1,8,16), dark);
+    w.position.set(x, .32, z); w.rotation.y = Math.PI/2; car.add(w); });
+  g.add(car);
+  const fallen = new THREE.Mesh(new THREE.BoxGeometry(3.6, 2.0, .1), new THREE.MeshStandardMaterial({
+    map: canvasTexture(384,214,(c,w,h) => { c.fillStyle='#e0d8c8'; c.fillRect(0,0,w,h); c.fillStyle='#141414'; c.font='800 46px Georgia'; c.textAlign='center';
+      c.fillText('ACHHE DIN', w/2, 100); c.font='20px monospace'; c.fillStyle='#4a4a4a'; c.fillText('(this hoarding has been retired)', w/2, 150); }), roughness:.85 }));
+  fallen.position.set(-6.5, .55, -3.5); fallen.rotation.set(-1.25, 0, .3); g.add(fallen);
+  // on the marble, in chalk: the citizens' words, hosed and rewritten
+  const chalk = new THREE.Mesh(new THREE.PlaneGeometry(9, 4.5), new THREE.MeshBasicMaterial({
+    map: canvasTexture(768,384,(c,w,h) => { c.clearRect(0,0,w,h); c.textAlign='center';
+      const line = (t, y, a, size, rot) => { c.save(); c.translate(w/2, y); c.rotate(rot); c.fillStyle=`rgba(240,236,226,${a})`; c.font=`700 ${size}px "Comic Sans MS", cursive, sans-serif`; c.fillText(t, 0, 0); c.restore(); };
+      line('HUM DEKHENGE', 120, .18, 78, -.03); line('WHERE IS THE DATA?', 220, .12, 54, .02);
+      line('HUM DEKHENGE', 140, .55, 84, .01); line('sawal poochna mana hai?', 262, .5, 40, -.015); line('— the cockroaches', 340, .45, 30, .0); }),
+    transparent:true, depthWrite:false, toneMapped:false }));
+  chalk.rotation.x = -Math.PI/2; chalk.position.set(0, .02, 3.6); g.add(chalk);
+  return g;
+}
 function buildFinale(){
+  if (SATIRE) return buildDarkFinale();
   const g = new THREE.Group();
   const tricolour = canvasTexture(512, 342, (c,w,h) => {
     c.fillStyle = '#FF9933'; c.fillRect(0,0,w,h/3);
