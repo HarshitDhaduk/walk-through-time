@@ -1,0 +1,21 @@
+{
+  "name": "walk-through-time",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A scroll-driven 3D memorial walkway through the timeline of the Mughal Empire and British rule in India, 1526-1947.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 8322"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.2.0",
+    "vite": "^7.3.6"
+  }
+}

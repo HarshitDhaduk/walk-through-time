@@ -1,0 +1,2618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Walk Through Time: 1526–1947</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23f5e7cd'/%3E%3Ccircle cx='32' cy='32' r='19' fill='none' stroke='%2326356e' stroke-width='5'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%2326356e'/%3E%3Cg stroke='%2326356e' stroke-width='2.4'%3E%3Cpath d='M32 13v38M13 32h38M18.6 18.6l26.8 26.8M45.4 18.6L18.6 45.4'/%3E%3C/g%3E%3C/svg%3E">
+<meta name="description" content="A scroll-driven 3D walkway through the timeline of the Mughal Empire and British rule in India, 1526–1947.">
+<style>
+  /* ============================================================
+     UI — global styles, landing, cards, progress bar, timeline
+     ============================================================ */
+  :root{
+    --saffron:#FF9933; --igreen:#138808; --sand:#D2A86A; --sand-dark:#8C5A2B;
+    --slate:#5A6B7A; --brick:#7A3B2E;
+    --ink:#f3ede2; --panel:rgba(21,16,11,0.86);
+    --serif:Georgia,'Times New Roman',serif;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#100b07;color:var(--ink);font-family:var(--sans)}
+  html{scroll-behavior:auto}
+
+  /* ACCESSIBILITY — skip link to the plain-text timeline */
+  .skip-link{
+    position:fixed;left:12px;top:-60px;z-index:200;background:#fff;color:#111;
+    padding:10px 16px;border-radius:8px;font-weight:600;text-decoration:none;
+    transition:top .2s ease;
+  }
+  .skip-link:focus{top:12px}
+
+  #scene{position:fixed;inset:0;width:100%;height:100dvh;display:block;z-index:1}
+  #scroll-space{position:relative;width:1px;pointer-events:none}
+
+  /* HUD */
+  #hud{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;justify-content:space-between;
+    align-items:flex-start;padding:16px 20px;pointer-events:none;
+    text-shadow:0 1px 8px rgba(0,0,0,.6)}
+  #zone-label{font-family:var(--serif);font-size:clamp(13px,1.6vw,17px);letter-spacing:.14em;
+    text-transform:uppercase;opacity:.9}
+  #year-readout{font-family:var(--serif);font-size:clamp(18px,2.4vw,26px);font-weight:700;
+    font-variant-numeric:tabular-nums;opacity:.92}
+
+  #audio-toggle{position:fixed;top:14px;right:16px;z-index:30;background:rgba(0,0,0,.45);
+    color:var(--ink);border:1px solid rgba(255,255,255,.25);border-radius:999px;
+    padding:8px 14px;font-size:13px;cursor:pointer;backdrop-filter:blur(6px)}
+  #audio-toggle[aria-pressed="true"]{border-color:var(--saffron);color:#ffd9a6}
+  #tour-toggle{position:fixed;top:14px;right:132px;z-index:30;background:rgba(0,0,0,.45);
+    color:var(--ink);border:1px solid rgba(255,255,255,.25);border-radius:999px;
+    padding:8px 14px;font-size:13px;cursor:pointer;backdrop-filter:blur(6px)}
+  #tour-toggle[aria-pressed="true"]{border-color:var(--saffron);color:#ffd9a6}
+  #year-readout{margin-right:230px}
+
+  /* station index (museum floor plan) */
+  #index-btn{position:fixed;left:20px;top:46px;z-index:170;background:rgba(0,0,0,.45);
+    color:var(--ink);border:1px solid rgba(255,255,255,.25);border-radius:999px;
+    padding:8px 14px;font-size:13px;cursor:pointer;backdrop-filter:blur(6px)}
+  #index-btn:hover{border-color:rgba(255,255,255,.55)}
+  #index{position:fixed;left:0;top:0;bottom:0;width:min(360px,90vw);z-index:160;
+    background:rgba(18,14,10,.97);border-right:1px solid rgba(255,255,255,.12);
+    transform:translateX(-102%);transition:transform .28s ease;overflow-y:auto;
+    padding:18px 14px 32px}
+  #index.open{transform:none}
+  #index h2{font-family:var(--serif);font-size:18px;margin:4px 6px 8px}
+  #index .idx-close{float:right;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.28);
+    color:var(--ink);border-radius:999px;padding:6px 13px;font-size:12px;cursor:pointer;margin:2px 2px 8px}
+  #index .idx-close:hover{border-color:rgba(255,255,255,.6)}
+  #index .zone-h{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.55;
+    margin:16px 6px 5px}
+  #index .stn{display:flex;gap:10px;align-items:baseline;width:100%;text-align:left;
+    background:none;border:none;color:var(--ink);padding:7px 8px;border-radius:8px;
+    cursor:pointer;font-size:13.5px;font-family:var(--sans)}
+  #index .stn:hover,#index .stn:focus-visible{background:rgba(255,255,255,.08)}
+  #index .dot{width:8px;height:8px;border-radius:50%;flex:none;align-self:center}
+  #index .yr{font-variant-numeric:tabular-nums;opacity:.7;min-width:76px;font-family:var(--serif)}
+
+  /* picture lightbox */
+  #lightbox{position:fixed;inset:0;z-index:300;background:rgba(6,5,4,.94);display:flex;
+    align-items:center;justify-content:center;padding:26px;cursor:zoom-out}
+  #lightbox[hidden]{display:none}
+  #lightbox figure{margin:0;text-align:center}
+  #lightbox img{max-width:min(1100px,94vw);max-height:76vh;object-fit:contain;
+    border-radius:6px;box-shadow:0 14px 60px rgba(0,0,0,.7)}
+  #lightbox figcaption{margin-top:14px;max-width:760px;margin-left:auto;margin-right:auto}
+  #lightbox strong{font-family:var(--serif);font-size:16px;display:block;margin-bottom:4px}
+  #lightbox span{font-size:12px;opacity:.6}
+  #lb-close{position:absolute;top:14px;right:18px;background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:999px;width:38px;height:38px;
+    font-size:15px;cursor:pointer}
+
+  /* finale montage — glimpses of the journey while circling the flag */
+  #montage{position:fixed;right:4vw;top:50%;transform:translateY(-50%);
+    width:min(330px,76vw);z-index:18;pointer-events:none}
+  #montage .m-head{font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.75;
+    margin-bottom:8px;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+  #montage .m-stage{position:relative;aspect-ratio:16/10}
+  #montage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    border-radius:12px;box-shadow:0 14px 46px rgba(0,0,0,.5);opacity:0;
+    transition:opacity 1s ease}
+  #montage img.on{opacity:1;animation:kenburns 2.9s ease-out forwards}
+  @keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.07)}}
+  #montage .m-cap{margin-top:10px;text-shadow:0 1px 6px rgba(0,0,0,.75)}
+  #montage .m-cap b{font-family:var(--serif);font-size:15px;display:block}
+  #montage .m-cap span{font-size:12.5px;opacity:.85}
+
+  /* STATION CARDS (real DOM for screen readers) */
+  #cards{position:fixed;inset:0;z-index:15;pointer-events:none;overflow:hidden}
+  .card{
+    position:absolute;left:0;top:0;width:min(300px,78vw);pointer-events:auto;
+    background:var(--panel);border:1px solid rgba(255,255,255,.12);
+    border-left:4px solid var(--sand);border-radius:12px;padding:14px 16px;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    box-shadow:0 10px 34px rgba(0,0,0,.45);
+    opacity:0;transform:translate(-50%,-100%) translateY(14px);
+    transition:opacity .35s ease;cursor:pointer;
+  }
+  .card:focus-visible{outline:2px solid var(--saffron);outline-offset:2px}
+  .card .card-art{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;display:block;
+    background:rgba(0,0,0,.3)}
+  .card .card-credit{font-size:10px;line-height:1.35;opacity:.5;margin:5px 0 7px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .card .card-credit:empty{margin:0 0 9px}
+  .card .card-year{font-family:var(--serif);font-size:13px;letter-spacing:.12em;opacity:.85;margin-bottom:2px}
+  .card h3{font-family:var(--serif);font-size:19px;line-height:1.2;margin:0 0 7px}
+  .card .summary{font-size:13.5px;line-height:1.5;margin:0;opacity:.92}
+  .card .details{font-size:13px;line-height:1.5;margin:8px 0 0;opacity:.85;display:none;
+    border-top:1px solid rgba(255,255,255,.14);padding-top:8px}
+  .card.expanded .details{display:block}
+  .card .more{background:none;border:none;color:#e8c98a;font-size:12px;margin-top:8px;
+    padding:0;cursor:pointer;font-family:var(--sans)}
+  .card .more:hover{text-decoration:underline}
+  .card.label-mode{width:min(268px,72vw)}
+  .card.label-mode .card-art,.card.label-mode .card-credit{display:none}
+  body.mobile .card.label-mode{width:min(480px,94vw)}
+  .card.flashback{border-style:dashed;background:rgba(46,36,20,.9);font-style:italic}
+  .card.flashback h3::before{content:"⟲ Flashback · ";font-size:12px;opacity:.7;font-style:normal}
+
+  /* Mobile: bottom sheet */
+  body.mobile .card{
+    left:50% !important;top:auto !important;bottom:78px;width:min(480px,94vw);
+    transform:translate(-50%,0) !important;
+  }
+
+  /* PROGRESS BAR with clickable year markers */
+  #progress{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
+    width:min(760px,86vw);z-index:25;pointer-events:none;
+    display:flex;align-items:center;gap:12px}
+  #progress .pstep{pointer-events:auto;flex:none;width:26px;height:26px;border-radius:50%;
+    background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.25);color:var(--ink);
+    font-size:15px;line-height:1;padding:0;cursor:pointer}
+  #progress .pstep:hover{border-color:rgba(255,255,255,.6)}
+  #progress .track{position:relative;height:4px;background:rgba(255,255,255,.18);
+    border-radius:2px;flex:1}
+  #progress .fill{position:absolute;left:0;top:0;bottom:0;width:0;
+    background:linear-gradient(90deg,var(--sand) 0%,var(--sand) 42%,var(--slate) 62%,var(--saffron) 88%,var(--igreen) 100%);
+    border-radius:2px}
+  #progress .thumb{position:absolute;top:50%;width:10px;height:10px;border-radius:50%;
+    background:#fff;box-shadow:0 0 8px rgba(255,255,255,.8);transform:translate(-50%,-50%)}
+  #progress .marker{position:absolute;top:50%;transform:translate(-50%,-50%);
+    width:22px;height:22px;border-radius:50%;border:none;background:transparent;
+    cursor:pointer;pointer-events:auto;padding:0}
+  #progress .marker::after{content:"";position:absolute;left:50%;top:50%;width:7px;height:7px;
+    transform:translate(-50%,-50%);border-radius:50%;background:rgba(255,255,255,.85)}
+  #progress .marker span{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);
+    font-size:10.5px;letter-spacing:.05em;color:rgba(255,255,255,.75);
+    font-variant-numeric:tabular-nums;text-shadow:0 1px 4px rgba(0,0,0,.8);white-space:nowrap}
+  #progress .marker:hover span,#progress .marker:focus-visible span{color:#fff}
+  #progress .marker:nth-of-type(even) span{bottom:30px}
+  #progress .marker:focus-visible{outline:2px solid var(--saffron);border-radius:50%}
+
+  /* LANDING / LOADING */
+  #landing{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;padding:24px;
+    background:radial-gradient(120% 90% at 50% 110%, #3a2410 0%, #17100a 55%, #0b0805 100%);
+    transition:opacity .9s ease}
+  #landing.hidden{opacity:0;pointer-events:none}
+  #landing .eyebrow{letter-spacing:.34em;font-size:12px;text-transform:uppercase;color:#c99d5e;margin-bottom:14px}
+  #landing h1{font-family:var(--serif);font-weight:700;font-size:clamp(30px,6vw,58px);
+    margin:0 0 10px;color:#f5e7cd}
+  #landing h1 .years{display:block;font-size:.52em;letter-spacing:.2em;color:#d2a86a;margin-top:6px}
+  #landing p.tag{max-width:560px;font-size:15px;line-height:1.6;opacity:.8;margin:0 0 30px}
+  #start-btn{font-family:var(--serif);font-size:17px;letter-spacing:.1em;color:#1c1108;
+    background:linear-gradient(180deg,#e8bd76,#c99a4e);border:none;border-radius:999px;
+    padding:14px 44px;cursor:pointer;box-shadow:0 6px 26px rgba(210,168,106,.35);
+    transition:transform .15s ease, opacity .3s}
+  #start-btn:hover:not(:disabled){transform:translateY(-2px)}
+  #start-btn:disabled{opacity:.45;cursor:wait}
+  #resume-btn{margin-top:14px;background:none;border:none;color:#d8b276;font-size:13.5px;
+    cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  #resume-btn:hover{color:#f0d29a}
+  #landing .hint{margin-top:22px;font-size:13px;opacity:.6;max-width:560px;line-height:1.6}
+  #load-status{margin-top:26px;font-size:12px;letter-spacing:.12em;color:#a98c62;min-height:16px}
+  #load-bar{width:min(300px,70vw);height:2px;background:rgba(255,255,255,.12);border-radius:1px;margin-top:10px}
+  #load-bar i{display:block;height:100%;width:0;background:#d2a86a;border-radius:1px;transition:width .25s ease}
+  #landing .err{color:#ff9d8a;max-width:480px;font-size:14px;line-height:1.5;margin-top:18px}
+
+  /* ACCESSIBILITY — plain HTML text timeline (same data, no WebGL needed) */
+  #text-timeline{position:fixed;inset:0;z-index:150;overflow:auto;background:#141009;
+    padding:40px 20px 80px;display:none}
+  #text-timeline.open{display:block}
+  #text-timeline .inner{max-width:760px;margin:0 auto}
+  #text-timeline h2{font-family:var(--serif);font-size:30px;margin:0 0 4px}
+  #text-timeline .sub{opacity:.7;margin:0 0 26px}
+  #text-timeline ol{list-style:none;margin:0;padding:0;border-left:2px solid rgba(255,255,255,.15)}
+  #text-timeline li{position:relative;padding:0 0 26px 26px}
+  #text-timeline li::before{content:"";position:absolute;left:-7px;top:6px;width:12px;height:12px;
+    border-radius:50%;background:var(--dot,#D2A86A)}
+  #text-timeline .t-year{font-family:var(--serif);font-size:14px;letter-spacing:.1em;opacity:.8}
+  #text-timeline .t-era{font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;opacity:.5;margin-left:8px}
+  #text-timeline h3{font-family:var(--serif);font-size:20px;margin:3px 0 8px}
+  #text-timeline .t-art{width:min(360px,100%);border-radius:8px;display:block;margin:2px 0 4px}
+  #text-timeline .t-credit{font-size:10.5px;opacity:.45;margin:0 0 10px}
+  #text-timeline p{font-size:14.5px;line-height:1.6;margin:0 0 6px;opacity:.9}
+  #text-timeline p.t-details{opacity:.7;font-size:13.5px}
+  #close-timeline{position:sticky;top:0;float:right;background:#2a2216;color:var(--ink);
+    border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:9px 16px;cursor:pointer;margin-bottom:14px}
+
+  .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  @media (max-width:640px){
+    #hud{padding:12px 14px}
+    #progress{bottom:10px}
+    #progress .marker span{font-size:9px}
+    #audio-toggle{top:42px;right:10px;padding:6px 11px;font-size:12px}
+    #tour-toggle{top:42px;right:106px;padding:6px 11px;font-size:12px}
+    #year-readout{margin-right:0}
+    #index-btn{top:36px;left:10px;padding:6px 11px;font-size:12px}
+    #montage{right:50%;transform:translate(50%,0);top:auto;bottom:96px;width:min(340px,84vw)}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .card{transition:none}
+    #landing{transition:none}
+    #montage img.on{animation:none}
+    #index{transition:none}
+  }
+</style>
+<!-- GSAP + ScrollTrigger (scroll-to-camera mapping, intro glide, HUD tweens) -->
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
+<script type="importmap">
+  {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}
+</script>
+</head>
+<body>
+
+<a class="skip-link" href="#text-timeline" id="skip-link">Skip to text timeline</a>
+
+<canvas id="scene" aria-hidden="true"></canvas>
+<div id="cards"></div>
+
+<header id="hud" aria-hidden="true">
+  <div id="zone-label"></div>
+  <div id="year-readout"></div>
+</header>
+
+<button id="audio-toggle" aria-pressed="false" title="Toggle ambient audio">🔇 Ambience</button>
+
+<nav id="progress" aria-label="Timeline navigation">
+  <button class="pstep" id="prev-stn" aria-label="Previous station">‹</button>
+  <div class="track">
+    <div class="fill"></div>
+    <div class="thumb"></div>
+  </div>
+  <button class="pstep" id="next-stn" aria-label="Next station">›</button>
+</nav>
+
+<div id="landing" role="dialog" aria-label="Welcome">
+  <div class="eyebrow">India · 1526 – 1947</div>
+  <h1>Walk Through Time <span class="years">The Mughal Empire &amp; British Rule</span></h1>
+  <p class="tag">A walk down a single path through four centuries — from Babur's cannon at Panipat
+     to the midnight of 15 August 1947. Scroll to walk; click a station's card to stand before
+     its picture, or press ▶ Tour and be carried through time.</p>
+  <button id="start-btn" disabled>Begin the Walk</button>
+  <button id="resume-btn" hidden></button>
+  <div class="hint">Scroll or arrow keys to walk · Click a card or its picture to step closer —
+    click the picture again for full view · N / P jump between stations · Esc steps back</div>
+  <div id="load-status">Preparing…</div>
+  <div id="load-bar"><i></i></div>
+  <div class="err" id="landing-err" hidden></div>
+</div>
+
+<section id="text-timeline" role="region" aria-label="Text timeline" tabindex="-1">
+  <div class="inner">
+    <button id="close-timeline">Return to the 3D walk ↩</button>
+    <h2>Timeline: Mughal Empire &amp; British Rule in India</h2>
+    <p class="sub">1526 – 1947 · Plain-text version of every station on the walkway.</p>
+    <ol id="timeline-list"></ol>
+  </div>
+</section>
+
+<div id="scroll-space"></div>
+
+<script type="module">
+/* ══════════════════════════════════════════════════════════════════
+   WALK THROUGH TIME · 1526–1947
+   Major systems, in order:
+     1. DATA             — the full 27-station timeline array
+     2. CAMERA PATH      — S-curved CatmullRomCurve3, scroll → progress
+     3. ERA TRANSITIONS  — environment keyframes interpolated along s
+     4. STATIONS         — frames, year plates, props, special set pieces
+     5. PARTICLES        — dust / embers+smoke / finale light
+     6. UI               — cards, progress bar, HUD, landing, audio
+     7. ACCESSIBILITY    — text timeline, keyboard, reduced motion
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ============================ 1. DATA ============================
+   Single source of truth. Stations are only ever rendered by
+   mapping over this array — never hard-coded individually.        */
+const TIMELINE = [
+  // ---- Zone 1 · Rise of the Mughals -----------------------------
+  { id:"panipat1-1526", era:"mughal", zone:0, year:"1526", side:"left",  accent:"#E0A458", prop:"cannon", art:"cannon",
+    title:"First Battle of Panipat",
+    summary:"Babur defeats Sultan Ibrahim Lodi at Panipat using field artillery and flanking tactics, ending Lodi rule in Delhi and founding the Mughal Empire.",
+    details:"Babur's gunpowder cannon and tulughma flanking overcame a far larger army. Ibrahim Lodi died on the field — among the first times artillery decided a major battle in North India." },
+  { id:"humayun-early-1530", era:"mughal", zone:0, year:"1530–1540", side:"right", accent:"#C98E4A", prop:"banner", art:"banner",
+    title:"Humayun's Early Reign",
+    summary:"Babur's son Humayun inherits a fragile empire. Defeated by Sher Shah Suri at Chausa (1539) and Kannauj (1540), he loses Hindustan and flees into exile.",
+    details:"Humayun spent fifteen years in exile, finding refuge at the Safavid court of Persia while Sher Shah consolidated power across North India." },
+  { id:"sur-interregnum-1540", era:"mughal", zone:0, year:"1540–1545", side:"left", accent:"#D9B65C", prop:"milestone", art:"road",
+    title:"The Sur Interregnum",
+    summary:"Sher Shah Suri builds a model administration: the Grand Trunk Road, the silver rupiya, and systematic land-revenue reform that later empires would inherit.",
+    details:"His roads, sarais, and revenue records became an administrative backbone reused by Akbar and, much later, studied closely by the British." },
+  { id:"humayun-return-1555", era:"mughal", zone:0, year:"1555–1556", side:"right", accent:"#C4884B", prop:"banner", art:"tomb",
+    title:"Humayun's Return & Death",
+    summary:"With Persian help, Humayun retakes Lahore and Delhi in 1555. Months later he dies after a fall on the steps of his library.",
+    details:"His tomb in Delhi, commissioned by his widow Bega Begum, became the first great Mughal garden-tomb — a forerunner of the Taj Mahal." },
+  { id:"panipat2-1556", era:"mughal", zone:0, year:"1556", side:"left", accent:"#E3B04B", prop:"cannon", art:"swords",
+    title:"Second Battle of Panipat",
+    summary:"Thirteen-year-old Akbar and regent Bairam Khan defeat Hemu's larger army at Panipat, securing the young dynasty's hold on Delhi.",
+    details:"Hemu, a general who had crowned himself in Delhi weeks earlier, was struck by an arrow mid-battle; his capture and death decided the day." },
+  // ---- Zone 2 · The Great Mughals --------------------------------
+  { id:"akbar-1556", era:"mughal", zone:1, year:"1556–1605", side:"right", accent:"#E8B54A", prop:"banner", art:"gate",
+    title:"Akbar",
+    summary:"Akbar expands the empire through conquest and Rajput alliances, abolishes the jizya (1564), founds Fatehpur Sikri, and builds the mansabdari administrative system.",
+    details:"His court debated every faith in the Ibadat Khana; Din-i-Ilahi, his syncretic order, drew few followers but symbolised an empire built on accommodation." },
+  { id:"haldighati-1576", era:"mughal", zone:1, year:"1576", side:"left", accent:"#B0623A", prop:"swords", art:"swords",
+    title:"Battle of Haldighati",
+    summary:"Akbar's general Man Singh fights Maharana Pratap of Mewar in the pass of Haldighati. Pratap escapes to carry on resistance from the hills for two more decades.",
+    details:"Mewar never formally submitted while Pratap lived. His escape on the wounded Chetak became legend, and Mughal control of southern Rajasthan stayed incomplete." },
+  { id:"jahangir-1605", era:"mughal", zone:1, year:"1605–1627", side:"right", accent:"#C9A227", prop:"scales", art:"scales",
+    title:"Jahangir",
+    summary:"Jahangir's reign blends art and justice — petitioners could pull his golden Chain of Justice. In 1615 Sir Thomas Roe arrives seeking English trade rights.",
+    details:"Empress Nur Jahan wielded real power, issuing orders and coins in her name. Roe's embassy won trading privileges that quietly seeded a future empire." },
+  { id:"shahjahan-1628", era:"mughal", zone:1, year:"1628–1658", side:"left", accent:"#F0E6D2", prop:"none", art:"taj",
+    title:"Shah Jahan",
+    summary:"The architectural golden age: the Taj Mahal (1632–1653) for Mumtaz Mahal, the Red Fort, and the Jama Masjid in his new capital, Shahjahanabad.",
+    details:"Some 20,000 artisans worked on the Taj. The jewelled Peacock Throne, set with the Koh-i-Noor, embodied a treasury the world envied." },
+  { id:"aurangzeb-1658", era:"mughal", zone:1, year:"1658–1707", side:"right", accent:"#A67C3D", prop:"banner", art:"tents",
+    title:"Aurangzeb",
+    summary:"Under Aurangzeb the empire reaches its greatest extent, but decades of Deccan war against Shivaji's Marathas and the reimposed jizya (1679) strain it deeply.",
+    details:"The 27-year Deccan campaign drained treasury and army alike. Maratha resistance outlasted him, leaving the empire overextended at his death." },
+  { id:"shivaji-1674", era:"mughal", zone:1, year:"1674", side:"left", accent:"#E07B39", prop:"hillfort", art:"hillfort",
+    title:"Shivaji Crowned Chhatrapati",
+    summary:"Shivaji Bhonsle, master of guerrilla war and hill forts, is crowned Chhatrapati at Raigad — an independent Maratha kingdom in the heart of Mughal India.",
+    details:"From Torna to Raigad, his forts anchored swarajya — self-rule. The Maratha state he founded would outlast and out-fight the empire that opposed it." },
+  { id:"khalsa-1699", era:"mughal", zone:1, year:"1699", side:"right", accent:"#33507A", prop:"khanda", art:"khanda",
+    title:"Birth of the Khalsa",
+    summary:"At Anandpur on Vaisakhi, Guru Gobind Singh founds the Khalsa, giving Sikhs a distinct identity of courage and service after years of Mughal persecution.",
+    details:"His father, Guru Tegh Bahadur, had been executed in Delhi in 1675. The Khalsa's discipline would shape Punjab's history for centuries to come." },
+  // ---- Zone 3 · Decline & the Company's entry --------------------
+  { id:"eic-1600", era:"transition", zone:2, year:"1600", side:"left", accent:"#5B6EA8", prop:"ship", art:"ship", flashback:true,
+    title:"East India Company Chartered",
+    summary:"On 31 December 1600, Queen Elizabeth I charters the East India Company — a London trading monopoly that will one day rule India.",
+    details:"A joint-stock company of merchants, first seeking spices; factories at Surat, Madras, Bombay, and Calcutta followed within a century." },
+  { id:"calcutta-1690", era:"transition", zone:2, year:"1690", side:"right", accent:"#5B8AA8", prop:"ship", art:"ship",
+    title:"Calcutta Founded",
+    summary:"Job Charnock anchors the East India Company at Sutanuti on the Hooghly. The village cluster grows into Calcutta — the future capital of British India.",
+    details:"Fort William rose by 1706. With Madras (1639) and Bombay (1661), the Company now held three fortified gateways into the subcontinent." },
+  { id:"aurangzeb-death-1707", era:"transition", zone:2, year:"1707", side:"left", accent:"#8C7A66", prop:"brokenPillar", art:"brokenPillar",
+    title:"Death of Aurangzeb",
+    summary:"Aurangzeb dies in the Deccan. Wars of succession follow, and the Marathas, Bengal, Hyderabad, and Awadh rise as the imperial centre weakens.",
+    details:"Later emperors reigned but rarely ruled; provincial governors kept revenues and armies, shrinking Delhi's writ to a narrowing heartland." },
+  { id:"farman-1717", era:"transition", zone:2, year:"1717", side:"right", accent:"#BFA045", prop:"scrolls", art:"scroll",
+    title:"The Golden Farman",
+    summary:"Emperor Farrukhsiyar grants the Company duty-free trade across Bengal for a token yearly payment — a privilege Bengal's nawabs resent for decades.",
+    details:"The farman's abuse by private traders drained Bengal's customs revenue and set the Company on a collision course with Siraj-ud-Daulah in 1756." },
+  { id:"nadir-shah-1739", era:"transition", zone:2, year:"1739", side:"left", accent:"#B23A2E", prop:"throne", art:"throne",
+    title:"Nadir Shah Sacks Delhi",
+    summary:"Nadir Shah of Persia crushes the Mughal army at Karnal and sacks Delhi, carrying away the Peacock Throne and the Koh-i-Noor diamond.",
+    details:"The massacre and plunder of Delhi shattered Mughal prestige; the empire never again commanded the fear — or the wealth — it had lost." },
+  { id:"plassey-1757", era:"transition", zone:2, year:"1757", side:"right", accent:"#8B0000", prop:"cannon", art:"cannon",
+    title:"Battle of Plassey",
+    summary:"Robert Clive defeats Nawab Siraj-ud-Daulah at Plassey, aided by Mir Jafar's defection. The East India Company becomes kingmaker in Bengal.",
+    details:"A short battle decided by betrayal more than arms: Mir Jafar's divisions stood aside, and Bengal's vast revenues fell within the Company's reach." },
+  { id:"panipat3-1761", era:"transition", zone:2, year:"1761", side:"left", accent:"#8A5A44", prop:"cannon", art:"swords",
+    title:"Third Battle of Panipat",
+    summary:"Ahmad Shah Abdali's Afghans crush the Maratha army at Panipat in one of the century's bloodiest battles, halting Maratha expansion northward.",
+    details:"Neither Afghans nor Marathas could hold the north afterwards — the vacuum eased the East India Company's rise from its base in Bengal." },
+  { id:"buxar-diwani-1764", era:"transition", zone:2, year:"1764–1765", side:"right", accent:"#9C6B30", prop:"coins", art:"coins",
+    title:"Buxar & the Diwani of Bengal",
+    summary:"The Company defeats the combined forces of Mir Qasim, Awadh, and the emperor at Buxar; the 1765 Diwani grants it Bengal's revenues. Company rule truly begins.",
+    details:"At Allahabad, Emperor Shah Alam II signed away revenue collection of Bengal, Bihar, and Orissa — a trading firm now taxed some twenty million people." },
+  { id:"famine-1770", era:"transition", zone:2, year:"1770", side:"left", accent:"#6B7280", prop:"bowl", art:"bowl", quiet:true,
+    title:"The Great Bengal Famine",
+    summary:"Under early Company revenue rule, drought becomes catastrophe. An estimated seven to ten million people — perhaps a third of Bengal — perish.",
+    details:"Revenue collection was not relaxed while the province starved. The famine became the first great indictment of Company rule, debated all the way to Parliament." },
+  // ---- Zone 4 · Company Raj --------------------------------------
+  { id:"mysore-1767", era:"british", zone:3, year:"1767–1799", side:"right", accent:"#B5541F", prop:"rockets", art:"rockets",
+    title:"Anglo-Mysore Wars",
+    summary:"Four wars against Mysore's Haidar Ali and Tipu Sultan. Tipu, the 'Tiger of Mysore', falls defending his capital Srirangapatna in 1799.",
+    details:"Tipu's iron-cased rockets startled British forces and influenced later military rocketry. His defeat removed the Company's fiercest southern rival." },
+  { id:"maratha-1775", era:"british", zone:3, year:"1775–1818", side:"left", accent:"#7A6A4F", prop:"hillfort", art:"hillfort",
+    title:"Anglo-Maratha Wars",
+    summary:"Three wars between 1775 and 1818 break Maratha power — the last major Indian check on the Company — leaving it paramount across the subcontinent.",
+    details:"After 1818 the Peshwa was pensioned off to Bithur, and most surviving states continued only as subordinate allies bound by subsidiary treaties." },
+  { id:"governance-1773", era:"british", zone:3, year:"1773–1858", side:"right", accent:"#5A6B7A", prop:"scrolls", art:"scroll",
+    title:"Company Governance Milestones",
+    summary:"The Company is bridled and bureaucratised: Regulating Act 1773, Pitt's India Act 1784, Permanent Settlement 1793, and Dalhousie's Doctrine of Lapse.",
+    details:"Calcutta became a capital of governors-general; annexation by 'lapse' swallowed states such as Satara and Jhansi, feeding the resentments of 1857." },
+  { id:"reform-1828", era:"british", zone:3, year:"1828–1835", side:"left", accent:"#3E7C74", prop:"book", art:"book",
+    title:"Reformers & New Learning",
+    summary:"Raja Rammohun Roy founds the Brahmo Sabha (1828); sati is outlawed (1829); Macaulay's Minute (1835) turns education policy to English. A new intelligentsia is born.",
+    details:"Indian reformers used print, petition, and law against social evils — the same tools a later generation would turn against the empire itself." },
+  { id:"sikh-wars-1845", era:"british", zone:3, year:"1845–1849", side:"right", accent:"#4F6D8C", prop:"swords", art:"swords",
+    title:"Anglo-Sikh Wars",
+    summary:"Two hard-fought wars after Ranjit Singh's death end with the annexation of Punjab in 1849 — the Company's last great conquest.",
+    details:"The young Maharaja Duleep Singh was deposed, and the Koh-i-Noor — taken once by Nadir Shah — was surrendered to the British Crown." },
+  { id:"rail-1853", era:"british", zone:3, year:"1853", side:"left", accent:"#4A5D6E", prop:"loco", art:"loco",
+    title:"Railway, Telegraph, Post",
+    summary:"The first passenger train steams 34 km from Bombay to Thane. Rail, telegraph, and uniform post begin stitching the subcontinent together.",
+    details:"Built to move troops and cotton, the railways also moved pilgrims, ideas, and newspapers — binding together a nation their builders had not intended to make." },
+  { id:"revolt-1857", era:"british", zone:3, year:"1857", side:"right", accent:"#D93A2B", prop:"charred", art:"fire",
+    title:"The Revolt of 1857",
+    summary:"Sepoys rise at Meerut and take Delhi, proclaiming Bahadur Shah Zafar their emperor. Mangal Pandey, Rani Lakshmibai, and many others become enduring symbols.",
+    details:"Fighting and reprisals on both sides were brutal, devastating Delhi, Kanpur, and Lucknow. The uprising failed — but it ended Company rule forever." },
+  { id:"crown-1858", era:"british", zone:3, year:"1858", side:"left", accent:"#6E4B8E", prop:"crownArch", art:"crownarch",
+    title:"End of Company & Mughal Rule",
+    summary:"The Government of India Act transfers rule from Company to Crown. Bahadur Shah Zafar, the last Mughal, is exiled to Rangoon.",
+    details:"Queen Victoria's proclamation promised non-interference in religion; the Mughal line begun by Babur in 1526 ended quietly in a Rangoon prison-house." },
+  // ---- Zone 5 · Crown Rule & the freedom struggle ----------------
+  { id:"empress-1876", era:"british", zone:4, year:"1876–1877", side:"right", accent:"#7A5AA0", prop:"crown", art:"crownrays",
+    title:"Empress of India",
+    summary:"The Royal Titles Act makes Queen Victoria Empress of India, proclaimed at Lytton's grand Delhi Durbar of 1877 — while famine grips the Deccan.",
+    details:"The durbar's pageantry aimed to root the Raj in Mughal ceremony. Its cost, amid famine deaths counted in millions, drew bitter criticism." },
+  { id:"congress-1885", era:"freedom", zone:4, year:"1885", side:"left", accent:"#2E7D5B", prop:"banner", art:"assembly",
+    title:"Indian National Congress Founded",
+    summary:"Seventy-two delegates found the Indian National Congress in Bombay — a loyal petitioning body that will grow into a mass freedom movement.",
+    details:"Early Congress 'moderates' sought reform within the empire; 'extremists' such as Tilak later claimed swaraj — self-rule — as a birthright." },
+  { id:"bengal-1905", era:"freedom", zone:4, year:"1905", side:"right", accent:"#D97B29", prop:"bonfire", art:"bonfire",
+    title:"Partition of Bengal & Swadeshi",
+    summary:"Curzon partitions Bengal, provoking the Swadeshi movement: boycotts of British goods, national schools, and a new mass politics. The partition is annulled in 1911.",
+    details:"Swadeshi made spinning, indigenous enterprise, and boycott into patriotic acts — and pushed the Congress toward far bolder demands." },
+  { id:"league-1906", era:"freedom", zone:4, year:"1906", side:"left", accent:"#1F7A5C", prop:"banner", art:"crescent",
+    title:"Muslim League Founded",
+    summary:"The All-India Muslim League is founded at Dacca to represent Muslim political interests — the start of a separate political current that will shape 1947.",
+    details:"In 1916 League and Congress briefly joined hands in the Lucknow Pact; three decades later the League's demand for Pakistan would divide the subcontinent." },
+  { id:"wwi-1914", era:"british", zone:4, year:"1914–1918", side:"right", accent:"#867E6A", prop:"memorial", art:"soldiers",
+    title:"India in the Great War",
+    summary:"Over a million Indian soldiers serve overseas in the First World War; some 74,000 never return. India's loyalty is repaid with the Rowlatt Act.",
+    details:"From Flanders to Mesopotamia, Indian regiments fought in every theatre. The war's broken promises radicalised a generation of nationalists." },
+  { id:"jallianwala-1919", era:"freedom", zone:4, year:"1919", side:"left", accent:"#6B7280", prop:"memorial", art:"garden", quiet:true,
+    title:"Jallianwala Bagh & the Rowlatt Act",
+    summary:"In Amritsar's Jallianwala Bagh, troops under General Dyer fire on an unarmed gathering, killing hundreds. It followed protests against the repressive Rowlatt Act.",
+    details:"Rabindranath Tagore returned his knighthood in protest. For countless Indians, faith in British justice ended in that walled garden on 13 April 1919." },
+  { id:"noncooperation-1920", era:"freedom", zone:4, year:"1920–1922", side:"right", accent:"#E4D9B8", prop:"charkha", art:"charkha",
+    title:"Non-Cooperation Movement",
+    summary:"Gandhi launches Non-Cooperation: boycotts of courts, schools, titles, and foreign cloth. Millions join; the movement halts after violence at Chauri Chaura (1922).",
+    details:"Khadi and the charkha became emblems of self-reliance. Allied with the Khilafat cause, the movement made Congress a truly mass organisation." },
+  { id:"purna-1929", era:"freedom", zone:4, year:"1929", side:"left", accent:"#FF9933", prop:"banner", art:"flagraise",
+    title:"Purna Swaraj",
+    summary:"At the Lahore Congress, with Jawaharlal Nehru presiding, India declares complete independence its goal; the tricolour is raised on the banks of the Ravi.",
+    details:"26 January 1930 was observed as the first Independence Day — a date later chosen for the Republic's constitution in 1950." },
+  { id:"dandi-1930", era:"freedom", zone:4, year:"1930", side:"right", accent:"#EDEAE0", prop:"salt", art:"saltmarch",
+    title:"Dandi Salt March",
+    summary:"Gandhi walks 240 miles from Sabarmati to Dandi and lifts a handful of salt, breaking the salt law and igniting Civil Disobedience nationwide.",
+    details:"Tens of thousands courted arrest making salt. The march turned a humble commodity into a symbol the empire could neither tax nor suppress." },
+  { id:"martyrs-1931", era:"freedom", zone:4, year:"1931", side:"left", accent:"#8E4A4A", prop:"flames3", art:"flames3", quiet:true,
+    title:"The Martyrs of Lahore",
+    summary:"Bhagat Singh, Sukhdev, and Rajguru are executed at Lahore. Grief sweeps the country even as Gandhi's pact with Irwin pauses Civil Disobedience.",
+    details:"Bhagat Singh, just 23, became an enduring symbol of fearless sacrifice; his call of 'Inquilab Zindabad' echoed far beyond the prison walls." },
+  { id:"goiact-1935", era:"freedom", zone:4, year:"1935", side:"right", accent:"#607890", prop:"scrolls", art:"scroll",
+    title:"Government of India Act",
+    summary:"The longest act in British history grants provincial autonomy; in the 1937 elections, Congress ministries take office in most provinces.",
+    details:"Its federal core never functioned, but the Act's machinery — provinces, franchise, offices — became scaffolding for the independent republic's constitution." },
+  { id:"quit-india-1942", era:"freedom", zone:4, year:"1942", side:"left", accent:"#C4452C", prop:"banner", art:"crowd",
+    title:"Quit India Movement",
+    summary:"With 'Quit India' and the call to 'do or die', Gandhi and the Congress demand immediate independence. The leadership is jailed; protest and repression sweep the country.",
+    details:"Wartime Britain answered with mass arrests — over 60,000 detained. Though suppressed, the movement showed British rule had lost India's consent." },
+  { id:"famine-1943", era:"freedom", zone:4, year:"1943", side:"right", accent:"#6B7280", prop:"bowl", art:"bowl", quiet:true,
+    title:"The Bengal Famine",
+    summary:"Amid wartime inflation, requisitioning, and failed relief, an estimated three million people die in Bengal.",
+    details:"Rice denial policies and delayed grain imports deepened the disaster. The famine seared itself into Bengal's memory — and into India's case against the Raj." },
+  { id:"ina-1943", era:"freedom", zone:4, year:"1943–1945", side:"left", accent:"#CC6A2A", prop:"banner", art:"marchflag",
+    title:"Bose & the INA",
+    summary:"Subhas Chandra Bose leads the Indian National Army — \"Give me blood, and I shall give you freedom\" — fighting alongside Japan at Imphal and Kohima.",
+    details:"The INA failed militarily, but the 1945 Red Fort trials of its officers ignited nationwide sympathy — even within the British Indian armed forces." },
+  { id:"lastmile-1946", era:"freedom", zone:4, year:"1946", side:"right", accent:"#4F6D8C", prop:"ship", art:"ship",
+    title:"The Last Mile",
+    summary:"Naval ratings mutiny in Bombay; the Cabinet Mission fails; Direct Action Day unleashes communal killing in Calcutta. Britain announces it will leave India.",
+    details:"With the armed forces restive and the treasury exhausted, London sent Mountbatten in March 1947 to transfer power — faster than anyone had expected." },
+  { id:"independence-1947", era:"freedom", zone:4, year:"1947", side:"left", accent:"#FF9933", prop:"finale", art:"freedom",
+    title:"Independence & Partition",
+    summary:"At midnight on 15 August 1947, India awakes \"to life and freedom\". Independence arrives together with Partition, whose violence and displacement uprooted millions.",
+    details:"Two states, India and Pakistan, were born. Partition's human cost — hundreds of thousands dead, over ten million displaced — is remembered with sorrow." },
+];
+
+/* ---- PHOTOGRAPHS -------------------------------------------------
+   One historical picture per station, hung behind glass in the 3D
+   frame and shown on the card. All are public-domain works from
+   Wikimedia Commons, downloaded into images/ so the gallery works
+   offline and does not hotlink Wikimedia's servers.
+   Three stations have no entry on purpose: the two famines and the
+   1853 railway. No suitable non-graphic period photograph was found
+   for the famines, and a bare drawn bowl is the more respectful
+   choice than a photograph of the dead; those keep their vignette. */
+const PHOTOS = {
+  "panipat1-1526":         { url:"images/panipat1-1526.jpg",
+      title:"1526-First Battle of Panipat-Ibrahim Lodhi and Babur",
+      credit:"Painters of Babur · Public domain · Wikimedia Commons" },
+  "humayun-early-1530":    { url:"images/humayun-early-1530.jpg",
+      title:"Emperor Humayun",
+      credit:"LACMA · Public domain · Wikimedia Commons" },
+  "sur-interregnum-1540":  { url:"images/sur-interregnum-1540.jpg",
+      title:"Distant view of Sher Shah Suri tomb - 1870s",
+      credit:"J D Beglar · Public domain · Wikimedia Commons" },
+  "panipat2-1556":         { url:"images/panipat2-1556.jpg",
+      title:"The defeat of Hemu, Akbarnama",
+      credit:"Kankar · Public domain · Wikimedia Commons" },
+  "akbar-1556":            { url:"images/akbar-1556.jpg",
+      title:"Buland Darwaza, Fatehpur Sikri in the 1920s",
+      credit:"Unknown authorUnknown author · Public domain · Wikimedia Commons" },
+  "jahangir-1605":         { url:"images/jahangir-1605.jpg",
+      title:"Mughal - Portrait of Emperor Jahangir - 1981.249 - Art Institute of Chicago",
+      credit:"anonymous · Public domain · Wikimedia Commons" },
+  "aurangzeb-1658":        { url:"images/aurangzeb-1658.jpg",
+      title:"Emperor Aurangzeb on horseback",
+      credit:"Unknown · Public domain · Wikimedia Commons" },
+  "shivaji-1674":          { url:"images/shivaji-1674.jpg",
+      title:"Shivaji British Museum",
+      credit:"Unknown authorUnknown author · Public domain · Wikimedia Commons" },
+  "khalsa-1699":           { url:"images/khalsa-1699.jpg",
+      title:"Guru Gobind Singh painting by Nainsukh of Guler",
+      credit:"Nainsukh of Guler · Public domain · Wikimedia Commons" },
+  "eic-1600":              { url:"images/eic-1600.jpg",
+      title:"Coat of Arms of the Honourable East India Company",
+      credit:"AnonymousUnknown author · Public domain · Wikimedia Commons" },
+  "calcutta-1690":         { url:"images/calcutta-1690.jpg",
+      title:"Fort William, Calcutta, 1735",
+      credit:"Elisha Kirkall (c. 1682–1742) · Public domain · Wikimedia Commons" },
+  "aurangzeb-death-1707":  { url:"images/aurangzeb-death-1707.jpg",
+      title:"Tomb of Aurangzeb at Khuldabad, Aurangabad, 1850s",
+      credit:"William Carpenter · Public domain · Wikimedia Commons" },
+  "farman-1717":           { url:"images/farman-1717.jpg",
+      title:"Farrúkh Síyár on horseback with attendants",
+      credit:"Mughal Style · Public domain · Wikimedia Commons" },
+  "nadir-shah-1739":       { url:"images/nadir-shah-1739.jpg",
+      title:"A portrait of Nadir Shah on horseback, Persia, late 18th century",
+      credit:"Sotheby's · Public domain · Wikimedia Commons" },
+  "plassey-1757":          { url:"images/plassey-1757.jpg",
+      title:"Lord Clive meeting with Mir Jafar after the Battle of Plassey",
+      credit:"Francis Hayman · Public domain · Wikimedia Commons" },
+  "panipat3-1761":         { url:"images/panipat3-1761.jpg",
+      title:"The Third battle of Panipat 13 January 1761",
+      credit:"AnonymousUnknown author · Public domain · Wikimedia Commons" },
+  "buxar-diwani-1764":     { url:"images/buxar-diwani-1764.jpg",
+      title:"Shah 'Alam conveying the grant of the Diwani to Lord Clive",
+      credit:"Benjamin West · Public domain · Wikimedia Commons" },
+  "mysore-1767":           { url:"images/mysore-1767.jpg",
+      title:"Tipu Sultan, a portrait c.1790",
+      credit:"Unknown authorUnknown author · Public domain · Wikimedia Commons" },
+  "maratha-1775":          { url:"images/maratha-1775.jpg",
+      title:"Battle of Assaye",
+      credit:"Joseph Constantine Stadler / After William Heath · Public domain · Wikimedia Commons" },
+  "governance-1773":       { url:"images/governance-1773.jpg",
+      title:"Warren Hastings by Tilly Kettle",
+      credit:"Tilly Kettle · Public domain · Wikimedia Commons" },
+  "reform-1828":           { url:"images/reform-1828.jpg",
+      title:"Bust portrait of the Hindu reformer Ram Mohan Roy.",
+      credit:"anonymous · Public domain · Wikimedia Commons" },
+  "sikh-wars-1845":        { url:"images/sikh-wars-1845.jpg",
+      title:"Later reproduction of a painting of a durbar (court) scene of Maharaja Ranjit Singh during the reign of the Si",
+      credit:"Unknown authorUnknown author · Public domain · Wikimedia Commons" },
+  "revolt-1857":           { url:"images/revolt-1857.jpg",
+      title:"SepoyMutiny",
+      credit:"Granger · Public domain · Wikimedia Commons" },
+  "crown-1858":            { url:"images/crown-1858.jpg",
+      title:"Bahadur Shah II of India",
+      credit:"Unknown authorUnknown author · Public domain · Wikimedia Commons" },
+  "empress-1876":          { url:"images/empress-1876.jpg",
+      title:"The Imperial Assemblage, 1877",
+      credit:"AnonymousUnknown author · Public domain · Wikimedia Commons" },
+  "congress-1885":         { url:"images/congress-1885.jpg",
+      title:"1st INC1885",
+      credit:"Unknown authorUnknown author · Public domain · Wikimedia Commons" },
+  "wwi-1914":              { url:"images/wwi-1914.jpg",
+      title:"The Indian Army on the Western Front Q53348",
+      credit:"Unknown authorUnknown author · Public domain · Wikimedia Commons" },
+  "purna-1929":            { url:"images/purna-1929.jpg",
+      title:"Jawaharlal Nehru and Motilal Nehru in 1929",
+      credit:"Unknown authorUnknown author · Public domain · Wikimedia Commons" },
+  "dandi-1930":            { url:"images/dandi-1930.jpg",
+      title:"Marche sel",
+      credit:"Yann (talk) · Public domain · Wikimedia Commons" },
+  "martyrs-1931":          { url:"images/martyrs-1931.jpg",
+      title:"Portrait photograph of Bhagat Singh, 1929",
+      credit:"Unknown photographer · Public domain · Wikimedia Commons" },
+  "ina-1943":              { url:"images/ina-1943.jpg",
+      title:"Netaji Subhas Chandra Bose Reviewing the Troops of Azad Hind Fauj - 1940's",
+      credit:"Unknown authorUnknown author · Public domain · Wikimedia Commons" },
+  "lastmile-1946":         { url:"images/lastmile-1946.jpg",
+      title:"Lord Mountbatten meets Nehru, Jinnah and other Leaders to plan Partition of India",
+      credit:"Unknown authorUnknown author · Public domain · Wikimedia Commons" },
+  "humayun-return-1555":   { url:"images/humayun-return-1555.jpg",
+      title:"Delhi, Mausoleum of the Emperor Humayoon LACMA M.90.24.23",
+      credit:"Samuel Bourne (England, 1834-1912) · Public domain · Wikimedia Commons" },
+  "haldighati-1576":       { url:"images/haldighati-1576.jpg",
+      title:"Miniature painting of Maharana Pratap Singh of Mewar State, after an older work, ca.1880",
+      credit:"Unknown authorUnknown author · Public domain · Wikimedia Commons" },
+  "shahjahan-1628":        { url:"images/shahjahan-1628.jpg",
+      title:"TajMahal1890",
+      credit:"Public domain · Wikimedia Commons" },
+  "bengal-1905":           { url:"images/bengal-1905.jpg",
+      title:"George Curzon2",
+      credit:"George Grantham Bain Collection (Library of Congress) · Public domain · Wikimedia Commons" },
+  "jallianwala-1919":      { url:"images/jallianwala-1919.jpg",
+      title:"Jallianwala Bagh Memorial, Amritsar",
+      credit:"Baap8969 · CC0 · Wikimedia Commons" },
+  "quit-india-1942":       { url:"images/quit-india-1942.jpg",
+      title:"Nehru Gandhi 1942",
+      credit:"Unknown authorUnknown author · Public domain · Wikimedia Commons" },
+  "league-1906":           { url:"images/league-1906.jpg",
+      title:"Jinnah portrait",
+      credit:"Ministry of Information & Broadcasting, Government of Pakist · Public domain · Wikimedia Commons" },
+  "goiact-1935":           { url:"images/goiact-1935.jpg",
+      title:"Mahatma Gandhi aboard the S.S. Rajputana en route to the Second Round Table Conference",
+      credit:"James A. Mills · Public domain · Wikimedia Commons" },
+  "independence-1947":     { url:"images/independence-1947.jpg",
+      title:"Jawaharlal Nehru delivering his \"tryst with destiny\" speech",
+      credit:"Unknown authorUnknown author · Public domain · Wikimedia Commons" },
+  "noncooperation-1920":   { url:"images/noncooperation-1920.jpg",
+      title:"Gandhi with Deshbandu C. R. Das",
+      credit:"Unknown authorUnknown author · Public domain · Wikimedia Commons" },
+};
+
+/* ---- station layout: everything below derives from TIMELINE ----
+   Stations sit every 13 m starting at s=20; the finale gets extra
+   room so the corridor can open into the plaza.                   */
+const SPACING = 13, FIRST_S = 20;
+const STATION_S = TIMELINE.map((st, i) =>
+  i < TIMELINE.length - 1 ? FIRST_S + i * SPACING
+                          : FIRST_S + (TIMELINE.length - 1) * SPACING + 10);
+const sOf = id => STATION_S[TIMELINE.findIndex(t => t.id === id)];
+const S_TAJ     = sOf('shahjahan-1628');
+const MUGHAL_END= sOf('khalsa-1699');          // last warm-sandstone station
+const S_TRANS   = sOf('eic-1600');             // decline zone begins
+const S_BRIT    = sOf('mysore-1767');          // Company Raj begins
+const S_REV     = sOf('revolt-1857');          // the scorched midpoint
+const S_CROWNST = sOf('crown-1858');
+const S_FREE    = sOf('empress-1876');         // Crown rule / freedom zone
+const FINALE_S  = STATION_S[TIMELINE.length - 1];
+const FLAG_S    = FINALE_S + 14;               // the tricolour, dead ahead at walk's end
+const SPAN      = FINALE_S + 8;                // camera stops here, facing the flag
+
+const ZONES = [
+  "I · Rise of the Mughals",
+  "II · The Great Mughals",
+  "III · Decline & the Company's Entry",
+  "IV · Company Raj",
+  "V · Crown Rule & the Freedom Struggle",
+].map((name, k) => {
+  const first = STATION_S[TIMELINE.findIndex(t => t.zone === k)];
+  return { name, s0: k === 0 ? 0 : first - 8 };
+}).map((z, k, arr) => ({ ...z, s1: k < arr.length - 1 ? arr[k + 1].s0 : 1e9 }));
+
+// Progress-bar year markers (station ids resolved below)
+const MARKER_YEARS = ["1526","1600","1707","1757","1857","1947"];
+
+/* ---- global flags ------------------------------------------------ */
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const MOBILE  = matchMedia('(pointer: coarse)').matches || innerWidth < 768;
+if (MOBILE) document.body.classList.add('mobile');
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g,
+  ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[ch]));
+
+/* ==================== CARD VIGNETTES (canvas art) ==================
+   Every card gets a miniature-painting-style image, drawn procedurally
+   — silhouette scenes on era-toned skies with an accent-line frame.
+   Pure canvas: no external images, works offline & without WebGL.  */
+const ARTPAL = {
+  mughal:    { top:'#2e1a0c', bot:'#eaa95e', sun:'#ffd98a', sil:'#26150a', gnd:'#3a2410' },
+  transition:{ top:'#3a332a', bot:'#c0b092', sun:'#eee0b6', sil:'#241c12', gnd:'#332a1e' },
+  british:   { top:'#26303c', bot:'#a3b6c6', sun:'#e8eef4', sil:'#161c24', gnd:'#20272e' },
+  freedom:   { top:'#3a648e', bot:'#f6ead2', sun:'#fff4d6', sil:'#1e2630', gnd:'#2a3542' },
+  quiet:     { top:'#20242a', bot:'#70757c', sun:null,      sil:'#0f1216', gnd:'#181c20' },
+  fire:      { top:'#200c08', bot:'#8a3620', sun:null,      sil:'#120705', gnd:'#1c0e08' },
+};
+const AW = 320, AH = 130, AGY = 104;   // vignette canvas & ground line
+const tri  = (c,x1,y1,x2,y2,x3,y3) => { c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.lineTo(x3,y3); c.closePath(); c.fill(); };
+const cir  = (c,x,y,r) => { c.beginPath(); c.arc(x,y,r,0,7); c.fill(); };
+const dome = (c,cx,by,r) => { c.beginPath(); c.arc(cx,by,r,Math.PI,0); c.fill(); c.fillRect(cx-r,by-2,2*r,3); tri(c,cx-3,by-r+2,cx+3,by-r+2,cx,by-r-9); };
+const person = (c,x,by,h=22) => { cir(c,x,by-h+3.5,3.5); tri(c,x-4.5,by,x+4.5,by,x,by-h+6); };
+const minar  = (c,x,by,h,w=5) => { c.fillRect(x-w/2,by-h,w,h); cir(c,x,by-h,w*.9); };
+const ART = {
+  cannon(c){ cir(c,160,88,13); cir(c,160,88,5);
+    c.save(); c.translate(160,84); c.rotate(-.5); c.fillRect(-8,-7,66,10); c.fillRect(-18,-9,14,14); c.restore();
+    cir(c,236,99,4); cir(c,245,101,4); cir(c,240,93,4); },
+  banner(c,acc){ person(c,120,AGY); person(c,138,AGY,19);
+    c.fillRect(180,34,3,70); c.fillStyle = acc; tri(c,183,36,225,42,183,52); },
+  road(c){ c.save(); c.fillStyle='rgba(255,240,210,.25)'; tri(c,138,AH,212,AH,172,70); c.restore();
+    tri(c,238,AGY,260,AGY,249,42); cir(c,249,44,6);
+    c.fillRect(84,72,4,32); cir(c,86,64,12); },
+  tomb(c){ c.fillRect(96,90,128,14); c.fillRect(120,62,80,30); dome(c,160,62,24);
+    c.fillRect(100,72,18,20); c.fillRect(202,72,18,20); dome(c,109,72,9); dome(c,211,72,9); },
+  swords(c){ c.save(); c.strokeStyle=c.fillStyle; c.lineWidth=5;
+    c.beginPath(); c.arc(130,150,80,-1.35,-.55); c.stroke();
+    c.beginPath(); c.arc(190,150,80,Math.PI+.55,Math.PI+1.35); c.stroke();
+    c.lineWidth=7;
+    c.beginPath(); c.moveTo(112,104); c.lineTo(130,112); c.stroke();
+    c.beginPath(); c.moveTo(208,104); c.lineTo(190,112); c.stroke(); c.restore(); },
+  gate(c,acc,p){ c.fillRect(110,42,100,62);
+    c.save(); c.fillStyle=p.bot; c.beginPath(); c.moveTo(140,AGY); c.lineTo(140,74);
+    c.quadraticCurveTo(140,56,160,52); c.quadraticCurveTo(180,56,180,74); c.lineTo(180,AGY);
+    c.closePath(); c.fill(); c.restore();
+    for (let x=116; x<=204; x+=15) dome(c,x,42,6);
+    c.fillRect(96,84,14,20); c.fillRect(210,84,14,20); },
+  hillfort(c,acc){ tri(c,60,AGY,180,AGY,120,54); tri(c,150,AGY,290,AGY,225,44);
+    c.fillRect(200,44,50,12); for (let x=202; x<246; x+=9) c.fillRect(x,38,5,7);
+    c.fillRect(224,20,2.5,18); c.fillStyle=acc; tri(c,226.5,20,252,25,226.5,31); },
+  scales(c){ c.fillRect(158,40,4,64); c.fillRect(120,44,80,4);
+    [124,196].forEach(x => { c.fillRect(x-1,48,2,18);
+      c.beginPath(); c.arc(x,70,12,0,Math.PI); c.fill(); });
+    tri(c,146,AGY,174,AGY,160,92); },
+  taj(c){ c.fillRect(92,92,136,10); c.fillRect(128,66,64,26); dome(c,160,64,22);
+    dome(c,136,74,8); dome(c,184,74,8); minar(c,104,92,34,4); minar(c,216,92,34,4); },
+  tents(c){ tri(c,90,AGY,140,AGY,115,66); tri(c,140,AGY,205,AGY,172,56); tri(c,205,AGY,250,AGY,227,70);
+    c.fillRect(171,30,2.5,28); tri(c,173.5,30,190,33.5,173.5,37); },
+  khanda(c){ c.save(); c.strokeStyle=c.fillStyle; c.lineWidth=5;
+    c.beginPath(); c.arc(160,66,24,0,7); c.stroke();
+    c.fillRect(157,26,6,66); tri(c,157,26,163,26,160,14);
+    c.beginPath(); c.arc(122,80,42,-1.1,-.1); c.stroke();
+    c.beginPath(); c.arc(198,80,42,Math.PI+.1,Math.PI+1.1); c.stroke(); c.restore(); },
+  ship(c){ c.save(); c.fillStyle='rgba(220,235,245,.25)'; c.fillRect(6,AGY-6,308,6); c.restore();
+    c.beginPath(); c.moveTo(110,86); c.lineTo(210,86); c.lineTo(196,100); c.lineTo(122,100); c.closePath(); c.fill();
+    c.fillRect(138,38,3,48); c.fillRect(176,46,3,40);
+    c.save(); c.fillStyle='rgba(240,235,220,.85)'; tri(c,141,42,141,80,168,74); tri(c,179,50,179,82,200,76); c.restore();
+    tri(c,138,38,138,46,152,42); },
+  brokenPillar(c){ c.fillRect(120,64,22,40); tri(c,120,64,142,64,131,52);
+    c.save(); c.translate(190,96); c.rotate(.25); c.fillRect(-30,-8,60,16); c.restore();
+    c.fillRect(112,100,38,6); },
+  scroll(c){ c.save(); c.fillStyle='rgba(238,226,196,.9)'; c.fillRect(120,52,80,44); c.restore();
+    c.fillRect(114,50,8,48); c.fillRect(198,50,8,48);
+    c.save(); c.strokeStyle='rgba(80,60,30,.8)'; c.lineWidth=2;
+    for (let y=62; y<=86; y+=8){ c.beginPath(); c.moveTo(130,y); c.lineTo(190,y); c.stroke(); } c.restore();
+    c.save(); c.fillStyle='#8d1f1f'; cir(c,186,90,6); c.restore();
+    tri(c,222,98,248,60,238,100); },
+  throne(c){ c.beginPath(); c.arc(160,66,26,Math.PI,0); c.fill();
+    c.fillRect(134,66,52,22); c.fillRect(128,88,64,8);
+    [138,178].forEach(x => c.fillRect(x,96,6,8));
+    c.save(); c.fillStyle='#3fae6a'; cir(c,160,58,5); c.restore(); },
+  coins(c){ const el = (x,y) => { c.beginPath(); c.ellipse(x,y,14,4,0,0,7); c.fill(); };
+    for (let i=0;i<4;i++) el(140,96-i*7); for (let i=0;i<3;i++) el(172,96-i*7);
+    c.fillRect(200,74,42,26); c.fillRect(196,70,50,8); },
+  bowl(c){ c.beginPath(); c.moveTo(134,78); c.quadraticCurveTo(138,100,160,100);
+    c.quadraticCurveTo(182,100,186,78); c.closePath(); c.fill(); c.fillRect(150,102,20,4); },
+  rockets(c){ [[130,86,-.7],[160,80,-.6],[190,88,-.5]].forEach(([x,y,r]) => {
+      c.save(); c.translate(x,y); c.rotate(r); c.fillRect(-3,-26,6,30); tri(c,-3,-26,3,-26,0,-36); c.restore(); });
+    c.save(); c.strokeStyle='rgba(255,170,90,.7)'; c.lineWidth=2;
+    [[130,86],[160,80],[190,88]].forEach(([x,y]) => { c.beginPath(); c.moveTo(x,y+6);
+      c.quadraticCurveTo(x-14,y+16,x-30,y+18); c.stroke(); }); c.restore(); },
+  book(c){ c.beginPath(); c.moveTo(160,60); c.lineTo(112,68); c.lineTo(112,92); c.lineTo(160,84);
+    c.lineTo(208,92); c.lineTo(208,68); c.closePath(); c.fill();
+    c.save(); c.fillStyle='rgba(240,232,210,.9)'; c.beginPath(); c.moveTo(160,63); c.lineTo(118,70);
+    c.lineTo(118,88); c.lineTo(160,81); c.lineTo(202,88); c.lineTo(202,70); c.closePath(); c.fill(); c.restore();
+    c.fillRect(236,86,14,6); tri(c,236,86,250,86,243,78);
+    c.save(); c.fillStyle='#ffb066'; cir(c,243,74,4); c.restore(); },
+  loco(c){ c.fillRect(60,98,200,4);
+    c.fillRect(96,66,86,22); c.fillRect(182,58,34,30); c.fillRect(104,50,12,18);
+    [116,146,196].forEach(x => cir(c,x,92,9));
+    c.save(); c.fillStyle='rgba(200,205,215,.5)'; cir(c,110,40,7); cir(c,124,32,9); cir(c,142,26,11); c.restore(); },
+  fire(c){ c.fillRect(96,70,30,34); tri(c,96,70,126,70,111,56);
+    c.fillRect(150,80,44,24); c.fillRect(206,64,26,40);
+    c.save(); const fg = c.createLinearGradient(0,40,0,100);
+    fg.addColorStop(0,'rgba(255,170,80,.95)'); fg.addColorStop(1,'rgba(200,60,20,.9)');
+    c.fillStyle = fg; tri(c,140,100,168,100,154,48); tri(c,158,100,184,100,171,60);
+    tri(c,128,100,150,100,139,66); c.restore(); },
+  crownarch(c){ c.save(); c.globalAlpha=.35;
+    c.fillRect(120,44,12,60); c.fillRect(188,44,12,60);
+    c.beginPath(); c.arc(160,58,40,Math.PI,0); c.arc(160,58,28,0,Math.PI,true); c.closePath(); c.fill(); c.restore();
+    c.save(); c.fillStyle='#c9a13b'; c.fillRect(140,78,40,14);
+    for (let i=0;i<5;i++) tri(c,140+i*8,78,148+i*8,78,144+i*8,64); cir(c,160,60,4); c.restore(); },
+  crownrays(c){ c.save(); c.strokeStyle='rgba(255,240,200,.5)'; c.lineWidth=3;
+    for (let i=0;i<9;i++){ const a=Math.PI*(1.1+i*.1);
+      c.beginPath(); c.moveTo(160+30*Math.cos(a),70+30*Math.sin(a));
+      c.lineTo(160+70*Math.cos(a),70+70*Math.sin(a)); c.stroke(); } c.restore();
+    c.save(); c.fillStyle='#c9a13b'; c.fillRect(134,70,52,16);
+    for (let i=0;i<6;i++) tri(c,134+i*10,70,144+i*10,70,139+i*10,52); cir(c,160,46,5); c.restore(); },
+  assembly(c,acc){ c.fillRect(104,74,112,30); dome(c,160,74,26); c.fillRect(96,100,128,4);
+    c.save(); c.fillStyle='rgba(240,235,220,.7)'; [118,140,180,202].forEach(x => c.fillRect(x,80,6,20)); c.restore();
+    c.fillRect(220,44,2.5,30); c.fillStyle=acc; tri(c,222.5,44,244,48.5,222.5,54); },
+  bonfire(c){ [-.4,.4].forEach(r => { c.save(); c.translate(160,98); c.rotate(r); c.fillRect(-24,-4,48,7); c.restore(); });
+    c.save(); const fg = c.createLinearGradient(0,50,0,98);
+    fg.addColorStop(0,'rgba(255,190,90,.95)'); fg.addColorStop(1,'rgba(210,90,30,.9)'); c.fillStyle = fg;
+    tri(c,142,96,178,96,160,50); tri(c,150,96,186,96,172,64); tri(c,134,96,166,96,148,66); c.restore();
+    c.fillRect(210,84,26,18); c.fillRect(206,80,34,6); },
+  crescent(c){ c.fillRect(118,78,84,26); dome(c,160,78,22); minar(c,106,AGY,44,4); minar(c,214,AGY,44,4);
+    c.save(); c.strokeStyle=c.fillStyle; c.lineWidth=3;
+    c.beginPath(); c.arc(160,40,8,.7,5.6); c.stroke(); cir(c,167,37,1.8); c.restore(); },
+  soldiers(c){ [110,140,170,200].forEach(x => { person(c,x,AGY,24); c.fillRect(x+3,AGY-32,2,14); });
+    c.save(); c.fillStyle='rgba(220,60,60,.55)'; [120,155,188].forEach(x => cir(c,x,AGY+12,2.5)); c.restore(); },
+  garden(c){ c.fillRect(84,56,60,48); c.fillRect(176,56,60,48);
+    c.fillRect(156,88,12,6); c.fillRect(150,94,24,4);
+    c.save(); c.fillStyle='#ffb066'; tri(c,158,88,166,88,162,76); c.restore(); },
+  charkha(c){ c.save(); c.strokeStyle=c.fillStyle; c.lineWidth=4;
+    c.beginPath(); c.arc(140,76,26,0,7); c.stroke();
+    for (let i=0;i<8;i++){ const a=i*Math.PI/4; c.beginPath(); c.moveTo(140,76);
+      c.lineTo(140+24*Math.cos(a),76+24*Math.sin(a)); c.stroke(); }
+    c.beginPath(); c.arc(206,88,9,0,7); c.stroke();
+    c.lineWidth=2; c.beginPath(); c.moveTo(140,50); c.lineTo(206,79); c.stroke(); c.restore();
+    c.fillRect(116,100,116,5); },
+  flagraise(c){ c.fillRect(196,26,3,78);
+    c.save(); c.fillStyle='#e98c2f'; c.fillRect(199,26,34,7);
+    c.fillStyle='#f2ede2'; c.fillRect(199,33,34,7);
+    c.fillStyle='#2c7a45'; c.fillRect(199,40,34,7);
+    c.fillStyle='#26356e'; cir(c,216,36.5,2.8); c.restore();
+    person(c,150,AGY,22); person(c,168,AGY,20); },
+  saltmarch(c){ [96,118,140,162].forEach(x => person(c,x,AGY,18)); person(c,184,AGY,24);
+    c.fillRect(191,AGY-30,2,30);
+    c.save(); c.fillStyle='rgba(240,240,235,.9)'; tri(c,246,AGY,282,AGY,264,88); c.restore();
+    c.save(); c.strokeStyle='rgba(210,230,240,.5)'; c.lineWidth=2;
+    c.beginPath(); c.moveTo(230,AGY+14); c.quadraticCurveTo(260,AGY+9,300,AGY+14); c.stroke(); c.restore(); },
+  flames3(c){ c.fillRect(120,92,80,10);
+    [140,160,180].forEach(x => { c.fillRect(x-6,90,12,4);
+      c.save(); c.fillStyle='#ffb066'; tri(c,x-5,90,x+5,90,x,72); c.restore(); }); },
+  crowd(c){ for (let i=0;i<9;i++){ const x=92+i*17, h=16+((i*7)%3)*4; person(c,x,AGY,h); }
+    [120,168,216].forEach((x,i) => { c.fillRect(x,AGY-52,2,26);
+      c.save(); c.fillStyle=['#e98c2f','#f2ede2','#2c7a45'][i]; tri(c,x+2,AGY-52,x+20,AGY-47.5,x+2,AGY-43); c.restore(); }); },
+  marchflag(c){ [120,146,172].forEach(x => { person(c,x,AGY,22); c.fillRect(x+3,AGY-32,2,12); });
+    c.fillRect(212,34,3,70);
+    c.save(); c.fillStyle='#e98c2f'; c.fillRect(215,34,30,6);
+    c.fillStyle='#f2ede2'; c.fillRect(215,40,30,6);
+    c.fillStyle='#2c7a45'; c.fillRect(215,46,30,6); c.restore(); },
+  freedom(c){ c.fillRect(96,30,4,74);
+    const band = y0 => { c.beginPath(); c.moveTo(100,y0); c.quadraticCurveTo(140,y0-8,180,y0);
+      c.quadraticCurveTo(212,y0+7,236,y0); c.lineTo(236,y0+14); c.quadraticCurveTo(212,y0+21,180,y0+14);
+      c.quadraticCurveTo(140,y0+6,100,y0+14); c.closePath(); c.fill(); };
+    c.save(); c.fillStyle='#e98c2f'; band(32); c.fillStyle='#f2ede2'; band(46); c.fillStyle='#2c7a45'; band(60);
+    c.strokeStyle='#26356e'; c.lineWidth=1.6;
+    c.beginPath(); c.arc(170,58,6,0,7); c.stroke();
+    for (let i=0;i<8;i++){ const a=i*Math.PI/4; c.beginPath(); c.moveTo(170,58);
+      c.lineTo(170+5.4*Math.cos(a),58+5.4*Math.sin(a)); c.stroke(); }
+    c.fillStyle='#f2ede2'; cir(c,262,84,13);
+    c.strokeStyle='#26356e'; c.lineWidth=2.4;
+    c.beginPath(); c.moveTo(262,84); c.lineTo(262,73); c.stroke(); c.restore(); },
+};
+function stationArtCanvas(st){
+  if (st._artCv) return st._artCv;
+  const cv = document.createElement('canvas'); cv.width = AW; cv.height = AH;
+  const c = cv.getContext('2d');
+  const p = st.art === 'fire' ? ARTPAL.fire : (st.quiet ? ARTPAL.quiet : (ARTPAL[st.era] || ARTPAL.freedom));
+  c.beginPath(); c.roundRect(0,0,AW,AH,10); c.clip();
+  const g = c.createLinearGradient(0,0,0,AH);
+  g.addColorStop(0,p.top); g.addColorStop(.85,p.bot);
+  c.fillStyle = g; c.fillRect(0,0,AW,AH);
+  if (p.sun){ c.save(); c.fillStyle = p.sun; c.globalAlpha=.9; cir(c,252,36,15);
+    c.globalAlpha=.22; cir(c,252,36,27); c.restore(); }
+  c.fillStyle = p.gnd; c.fillRect(0,AGY,AW,AH-AGY);
+  c.fillStyle = p.sil;
+  (ART[st.art] || ART.banner)(c, st.accent, p);
+  c.strokeStyle = st.accent; c.globalAlpha=.85; c.lineWidth=3; c.strokeRect(4,4,AW-8,AH-8);
+  c.globalAlpha=.4; c.lineWidth=1; c.strokeRect(9,9,AW-18,AH-18); c.globalAlpha=1;
+  return st._artCv = cv;
+}
+function stationArt(st){                       // vignette as a data URL (cards, text timeline)
+  return st._art || (st._art = stationArtCanvas(st).toDataURL('image/png'));
+}
+/* The image a card shows: the historical photograph when the station
+   has one, else the procedural vignette. DOM <img> loads it straight
+   from disk — independent of the 3D texture loader — and falls back
+   to the vignette if the file is somehow unavailable.             */
+function cardImage(st){ return PHOTOS[st.id] ? PHOTOS[st.id].url : stationArt(st); }
+function attachArtFallback(root){
+  root.querySelectorAll('img[data-sid]').forEach(img => {
+    img.onerror = () => {
+      const st = TIMELINE.find(t => t.id === img.dataset.sid);
+      img.onerror = null;
+      if (st) img.src = stationArt(st);
+      const cr = img.parentElement && img.parentElement.querySelector('.card-credit, .t-credit');
+      if (cr) cr.textContent = '';
+    };
+  });
+}
+
+/* =================== 7. ACCESSIBILITY (part 1) ====================
+   Text timeline is built from DATA immediately, before any WebGL,
+   so the content is available even if 3D never loads.             */
+(function buildTextTimeline(){
+  const ol = $('#timeline-list');
+  const zoneNames = ZONES.map(z=>z.name);
+  ol.innerHTML = TIMELINE.map(st => `
+    <li style="--dot:${st.accent}">
+      <span class="t-year">${st.year}</span><span class="t-era">${st.flashback?'flashback · ':''}${zoneNames[st.zone]}</span>
+      <h3>${st.title}</h3>
+      <img class="t-art" data-sid="${st.id}" src="${cardImage(st)}"
+           alt="${PHOTOS[st.id] ? esc(PHOTOS[st.id].title) : ''}" loading="lazy">
+      <div class="t-credit">${PHOTOS[st.id] ? esc(PHOTOS[st.id].credit) : ''}</div>
+      <p>${st.summary}</p>
+      <p class="t-details">${st.details}</p>
+    </li>`).join('');
+  attachArtFallback(ol);
+  const open  = () => { $('#text-timeline').classList.add('open'); $('#text-timeline').focus(); };
+  const close = () => { $('#text-timeline').classList.remove('open'); $('#skip-link').focus(); };
+  $('#skip-link').addEventListener('click', e => { e.preventDefault(); open(); });
+  $('#close-timeline').addEventListener('click', close);
+  $('#text-timeline').addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+})();
+
+/* ============================ BOOT ================================ */
+const loadStatus = $('#load-status'), loadBar = $('#load-bar i');
+function setLoad(pct, msg){ loadBar.style.width = pct+'%'; if (msg) loadStatus.textContent = msg; }
+const nextFrame = () => new Promise(r => setTimeout(r, 16));   // rAF stalls in hidden tabs
+
+let THREE;
+try {
+  setLoad(6, 'Loading Three.js…');
+  THREE = await import('three');
+} catch (err) {
+  $('#landing-err').hidden = false;
+  $('#landing-err').textContent =
+    'Could not load the 3D engine (no internet connection?). You can still read the full timeline below.';
+  loadStatus.textContent = '';
+  const b = $('#start-btn');
+  b.disabled = false; b.textContent = 'Open Text Timeline';
+  b.addEventListener('click', () => $('#text-timeline').classList.add('open'));
+  throw err;
+}
+
+/* ======================= 2. CAMERA PATH ===========================
+   A gentle S-curved CatmullRomCurve3. Scroll progress (0..1) maps to
+   arc-length distance s ∈ [0, SPAN]; the camera walks getPointAt(). */
+const ctrl = [];
+for (let j = 0; j <= 17; j++) ctrl.push(new THREE.Vector3(8*Math.sin(j*0.7), 0, -j*40));
+const path = new THREE.CatmullRomCurve3(ctrl, false, 'catmullrom', 0.5);
+const PATHLEN = path.getLength();
+const sToU = s => Math.min(s / PATHLEN, 1);
+
+const _p = new THREE.Vector3(), _t = new THREE.Vector3(), _side = new THREE.Vector3();
+const UP = new THREE.Vector3(0,1,0);
+function pointAt(s, out){ return (out||_p).copy(path.getPointAt(sToU(s))); }
+function tangentAt(s, out){ return (out||_t).copy(path.getTangentAt(sToU(s))).setY(0).normalize(); }
+function sideAt(s, out){ tangentAt(s, _t); return (out||_side).crossVectors(UP, _t).normalize(); } // left of travel
+
+/* ---- renderer / scene / camera ---- */
+const canvas = $('#scene');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias:true, powerPreference:'high-performance' });
+} catch (err) {
+  $('#landing-err').hidden = false;
+  $('#landing-err').textContent = 'WebGL is unavailable on this device. Use the text timeline instead.';
+  $('#start-btn').disabled = false; $('#start-btn').textContent = 'Open Text Timeline';
+  $('#start-btn').addEventListener('click', () => $('#text-timeline').classList.add('open'));
+  throw err;
+}
+renderer.setPixelRatio(Math.min(devicePixelRatio, MOBILE ? 1.5 : 2));  // perf budget: DPR cap
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xcaa268, 12, 95);
+const camera = new THREE.PerspectiveCamera(58, innerWidth/innerHeight, 0.1, 500);
+camera.rotation.order = 'YXZ';
+
+/* ---- lights (shared; colours retinted per era each frame) ---- */
+const hemi = new THREE.HemisphereLight(0xffdcae, 0x7a5a34, 0.8); scene.add(hemi);
+const sun  = new THREE.DirectionalLight(0xffc47e, 1.6);          scene.add(sun); scene.add(sun.target);
+// pooled accent point lights, reassigned to the 3 nearest stations each frame
+const pool = [0,1,2].map(()=>{ const l = new THREE.PointLight(0xffffff, 0, 18, 1.8); scene.add(l); return l; });
+
+/* ==================== 3. ERA TRANSITIONS ==========================
+   Environment keyframes along s. Fog, sky gradient, light colour &
+   intensity all lerp smoothly as the visitor crosses zone borders.
+   Extra keys create the 1857 red band and the quiet 1919 station. */
+const C = h => new THREE.Color(h);
+// Environment presets: [fog, skyTop, skyBot, hemiSky, hemiGnd, hemiI, sunC, sunI, fogNear, fogFar]
+const E_DAWN  = [C('#caa268'),C('#3b2312'),C('#e8b872'),C('#ffdcae'),C('#7a5a34'),.80,C('#ffc47e'),1.60,12, 95];
+const E_GOLD  = [C('#d8b276'),C('#4a2c14'),C('#f3cf8e'),C('#ffe2b8'),C('#82603a'),.90,C('#ffd08a'),1.85,12,112];
+const E_GOLD2 = [C('#cfa970'),C('#452a14'),C('#eec686'),C('#ffddb0'),C('#7a5a34'),.85,C('#ffcc84'),1.70,12,105];
+const E_DUST  = [C('#9c8f7a'),C('#3c352c'),C('#b3a68e'),C('#cfc4b0'),C('#4a4238'),.62,C('#d8c8a8'),1.05,10, 72];
+const E_SLATE = [C('#8a99a5'),C('#2e3742'),C('#9fb0bd'),C('#bccbd8'),C('#3c444c'),.66,C('#dfe8f0'),1.25,11, 86];
+const E_SLATE2= [C('#84939f'),C('#2b333d'),C('#98a8b5'),C('#b6c5d2'),C('#394148'),.62,C('#d8e2ea'),1.20,11, 82];
+const E_RED   = [C('#4a241c'),C('#1d0f0d'),C('#5a2c22'),C('#7a4438'),C('#241210'),.50,C('#ff6644'),0.95, 6, 46];
+const E_RED2  = [C('#54291f'),C('#221211'),C('#663228'),C('#84493c'),C('#281512'),.52,C('#ff7350'),1.00, 7, 50];
+const E_SLATE3= [C('#95a2ab'),C('#333c46'),C('#aeb9c2'),C('#c2cfda'),C('#404850'),.66,C('#e2eaf2'),1.25,12, 92];
+const E_LIGHT = [C('#b0bcc3'),C('#42556b'),C('#cdd8de'),C('#d5e0ea'),C('#565e66'),.74,C('#eef2f6'),1.35,13,104];
+const E_BRIGHT= [C('#d5e0e6'),C('#5a7fa8'),C('#e8f0f4'),C('#f0f6fa'),C('#8b9585'),.88,C('#ffffff'),1.65,16,132];
+const E_PLAZA = [C('#e9f1f5'),C('#7fb0dd'),C('#fdf6e8'),C('#ffffff'),C('#cfe0d2'),1.00,C('#fff6e0'),2.00,20,170];
+const E_PLAZA2= [C('#eef4f7'),C('#8ab8e2'),C('#fdf8ec'),C('#ffffff'),C('#d5e4d8'),1.00,C('#fff8e6'),2.05,20,175];
+// Keyframes positioned relative to the stations they belong to
+const ENV_KEYS = [
+  [0,                       ...E_DAWN],
+  [S_TAJ,                   ...E_GOLD],
+  [S_TRANS - 12,            ...E_GOLD2],
+  [(S_TRANS + S_BRIT) / 2,  ...E_DUST],
+  [S_BRIT + 8,              ...E_SLATE],
+  [S_REV - 14,              ...E_SLATE2],
+  [S_REV - 3,               ...E_RED],
+  [S_REV + 10,              ...E_RED2],
+  [S_CROWNST + 12,          ...E_SLATE3],
+  [S_FREE + 16,             ...E_LIGHT],
+  [FLAG_S - 52,             ...E_BRIGHT],
+  [FLAG_S - 12,             ...E_PLAZA],
+  [FLAG_S + 85,             ...E_PLAZA2],
+];
+const smooth = t => t*t*(3-2*t);
+const _envC = { fog:new THREE.Color(), skyT:new THREE.Color(), skyB:new THREE.Color(),
+                hS:new THREE.Color(), hG:new THREE.Color(), sun:new THREE.Color() };
+function applyEnv(s){
+  let i = 0;
+  while (i < ENV_KEYS.length-2 && ENV_KEYS[i+1][0] < s) i++;
+  const a = ENV_KEYS[i], b = ENV_KEYS[i+1];
+  const t = smooth(THREE.MathUtils.clamp((s - a[0]) / (b[0] - a[0]), 0, 1));
+  _envC.fog.lerpColors(a[1], b[1], t);   _envC.skyT.lerpColors(a[2], b[2], t);
+  _envC.skyB.lerpColors(a[3], b[3], t);  _envC.hS.lerpColors(a[4], b[4], t);
+  _envC.hG.lerpColors(a[5], b[5], t);    _envC.sun.lerpColors(a[7], b[7], t);
+  scene.fog.color.copy(_envC.fog);
+  scene.fog.near = THREE.MathUtils.lerp(a[9],  b[9],  t);
+  scene.fog.far  = THREE.MathUtils.lerp(a[10], b[10], t);
+  hemi.color.copy(_envC.hS); hemi.groundColor.copy(_envC.hG);
+  hemi.intensity = THREE.MathUtils.lerp(a[6], b[6], t);
+  sun.color.copy(_envC.sun);
+  sun.intensity = THREE.MathUtils.lerp(a[8], b[8], t);
+  sky.material.uniforms.uTop.value.copy(_envC.skyT);
+  sky.material.uniforms.uBot.value.copy(_envC.skyB);
+}
+
+/* ---- gradient sky dome (dawn → overcast → bright day) ---- */
+const sky = new THREE.Mesh(
+  new THREE.SphereGeometry(380, 24, 12),
+  new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite:false, fog:false,
+    uniforms:{ uTop:{value:C('#3b2312')}, uBot:{value:C('#e8b872')} },
+    vertexShader:`varying float vY; void main(){ vY = normalize(position).y;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+    fragmentShader:`uniform vec3 uTop,uBot; varying float vY;
+      void main(){ float t = pow(clamp(vY*.5+.5, 0., 1.), 1.35);
+      gl_FragColor = vec4(mix(uBot,uTop,t), 1.0); }`
+  }));
+scene.add(sky);
+
+/* ---- floor ribbon with baked per-vertex era tints ----------------
+   Colours (sandstone → dust → slate → scorched 1857 → pale stone)
+   are baked once; global light/fog does the live blending.        */
+const FLOOR_KEYS = [
+  [0,               C('#c79d61')], [MUGHAL_END,     C('#cfa76b')],
+  [(S_TRANS+S_BRIT)/2, C('#93866f')], [S_BRIT + 8,  C('#6a7680')],
+  [S_REV - 9,       C('#5d6871')], [S_REV - 4,      C('#221310')],
+  [S_REV + 6,       C('#241512')], [S_CROWNST + 7,  C('#5d6871')],
+  [S_FREE + 65,     C('#9aa1a3')], [FLAG_S - 56,    C('#cfcaba')],
+  [FLAG_S - 14,     C('#e6e0d0')], [FLAG_S + 85,    C('#f0ead9')],
+];
+const _fc = new THREE.Color();
+function floorTint(s, out){
+  let i = 0; while (i < FLOOR_KEYS.length-2 && FLOOR_KEYS[i+1][0] < s) i++;
+  const a = FLOOR_KEYS[i], b = FLOOR_KEYS[i+1];
+  const t = smooth(THREE.MathUtils.clamp((s-a[0])/(b[0]-a[0]), 0, 1));
+  return (out||_fc).lerpColors(a[1], b[1], t);
+}
+const WALK_W = MOBILE ? 5.5 : 7;         // responsive: narrower walkway on mobile
+function walkWidth(s){
+  const plaza = smooth(THREE.MathUtils.clamp((s-(FLAG_S-32))/36, 0, 1)); // corridor opens into 1947 plaza
+  return WALK_W + plaza * (26 - WALK_W);
+}
+
+/* ---- memorial promenade flooring --------------------------------
+   Inlaid-stone texture in neutral warm greys: border bands with
+   diamond inlays, grouted tiles, and a lotus-star medallion every
+   8 m. Era hues come from the baked vertex tints multiplying it. */
+function makeFloorTexture(){
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 512;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#d9d0c1'; c.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 900; i++){                                   // stone mottling
+    c.fillStyle = `rgba(120,105,85,${Math.random()*.05})`;
+    c.fillRect(Math.random()*512, Math.random()*512, 22, 3);
+  }
+  // edge border bands with inlay lines
+  c.fillStyle = '#bcae92'; c.fillRect(0,0,36,512); c.fillRect(476,0,36,512);
+  c.fillStyle = '#93856a'; c.fillRect(36,0,5,512); c.fillRect(471,0,5,512);
+  c.fillStyle = '#93856a';                                          // border diamond inlays
+  for (let y = 32; y < 512; y += 64){
+    [18, 494].forEach(x => { c.save(); c.translate(x,y); c.rotate(Math.PI/4); c.fillRect(-7,-7,14,14); c.restore(); });
+  }
+  // grouted field tiles
+  c.strokeStyle = '#a89880'; c.lineWidth = 3;
+  for (let y = 0; y <= 512; y += 128){ c.beginPath(); c.moveTo(41,y); c.lineTo(471,y); c.stroke(); }
+  c.beginPath(); c.moveTo(256,0); c.lineTo(256,512); c.stroke();
+  // corner dots of each tile
+  c.fillStyle = '#a3947a';
+  for (let y = 0; y <= 512; y += 128) for (let x of [148, 364]){ c.beginPath(); c.arc(x, y, 5, 0, 7); c.fill(); }
+  // central lotus-star medallion (one per 8 m of walkway)
+  c.save(); c.translate(256, 256);
+  c.strokeStyle = '#93856a'; c.lineWidth = 5;
+  c.beginPath(); c.arc(0, 0, 88, 0, 7); c.stroke();
+  c.beginPath(); c.arc(0, 0, 70, 0, 7); c.stroke();
+  c.fillStyle = '#b3a488';
+  for (let i = 0; i < 8; i++){                                      // 8-petal star
+    c.save(); c.rotate(i*Math.PI/4);
+    c.beginPath(); c.moveTo(0,-62); c.quadraticCurveTo(16,-26, 0,-12); c.quadraticCurveTo(-16,-26, 0,-62);
+    c.closePath(); c.fill(); c.restore();
+  }
+  c.fillStyle = '#93856a'; c.beginPath(); c.arc(0, 0, 10, 0, 7); c.fill();
+  c.restore();
+  return cv;
+}
+/* white-marble plaza medallion: Ashoka Chakra ringed in muted
+   saffron and green — the memorial's final floor emblem          */
+function makePlazaTexture(){
+  const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 1024;
+  const c = cv.getContext('2d'), cx = 512;
+  c.fillStyle = '#ece5d4'; c.fillRect(0,0,1024,1024);
+  for (let i = 0; i < 1200; i++){
+    c.fillStyle = `rgba(150,140,120,${Math.random()*.05})`;
+    c.fillRect(Math.random()*1024, Math.random()*1024, 26, 3);
+  }
+  c.strokeStyle = 'rgba(150,140,118,.5)'; c.lineWidth = 2;          // radial marble joints
+  for (let i = 0; i < 24; i++){ const a = i*Math.PI/12;
+    c.beginPath(); c.moveTo(cx + 150*Math.cos(a), cx + 150*Math.sin(a));
+    c.lineTo(cx + 512*Math.cos(a), cx + 512*Math.sin(a)); c.stroke(); }
+  [220, 320, 420].forEach(r => { c.beginPath(); c.arc(cx,cx,r,0,7); c.stroke(); });
+  c.lineWidth = 26; c.strokeStyle = '#d98f3f';                      // muted saffron ring
+  c.beginPath(); c.arc(cx, cx, 468, 0, 7); c.stroke();
+  c.strokeStyle = '#3f7a52';                                        // muted green ring
+  c.beginPath(); c.arc(cx, cx, 434, 0, 7); c.stroke();
+  c.strokeStyle = '#26356e'; c.lineWidth = 16;                      // Ashoka Chakra
+  c.beginPath(); c.arc(cx, cx, 128, 0, 7); c.stroke();
+  c.lineWidth = 6;
+  for (let i = 0; i < 24; i++){ const a = i*Math.PI/12;
+    c.beginPath(); c.moveTo(cx, cx); c.lineTo(cx + 122*Math.cos(a), cx + 122*Math.sin(a)); c.stroke(); }
+  c.fillStyle = '#26356e'; c.beginPath(); c.arc(cx, cx, 22, 0, 7); c.fill();
+  return cv;
+}
+
+function buildFloor(){
+  const rows = Math.ceil(FLAG_S + 55), cols = 4;
+  const pos = [], col = [], idx = [], nrm = [], uv = [];
+  const c = new THREE.Color(), P = new THREE.Vector3(), S = new THREE.Vector3();
+  for (let r = 0; r <= rows; r++){
+    const s = r; pointAt(s, P); sideAt(s, S);
+    const w = walkWidth(s);
+    for (let k = 0; k < cols; k++){
+      const f = k/(cols-1)*2 - 1;                       // -1 .. 1 across
+      pos.push(P.x + S.x*f*w/2, 0, P.z + S.z*f*w/2);
+      nrm.push(0,1,0);
+      uv.push(k/(cols-1), s/8);                         // memorial pattern repeats every 8 m
+      floorTint(s, c);
+      const edge = 1 - Math.abs(f)*0.12;
+      const noise = 0.96 + 0.08*Math.sin(s*12.9898 + k*78.233)*Math.sin(s*0.7);
+      col.push(c.r*edge*noise, c.g*edge*noise, c.b*edge*noise);
+    }
+  }
+  for (let r = 0; r < rows; r++) for (let k = 0; k < cols-1; k++){
+    const a = r*cols+k, b = a+1, d = a+cols, e = d+1;
+    idx.push(a,d,b, b,d,e);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute('normal',   new THREE.Float32BufferAttribute(nrm,3));
+  g.setAttribute('color',    new THREE.Float32BufferAttribute(col,3));
+  g.setAttribute('uv',       new THREE.Float32BufferAttribute(uv,2));
+  g.setIndex(idx);
+  const floorTex = new THREE.CanvasTexture(makeFloorTexture());
+  floorTex.colorSpace = THREE.SRGBColorSpace;
+  floorTex.wrapT = THREE.RepeatWrapping; floorTex.wrapS = THREE.ClampToEdgeWrapping;
+  floorTex.anisotropy = 8;
+  scene.add(new THREE.Mesh(g, new THREE.MeshStandardMaterial({
+    map: floorTex, vertexColors: true, roughness: .92 })));
+  // marble plaza with the Ashoka Chakra medallion under the flag
+  const plazaTex = new THREE.CanvasTexture(makePlazaTexture());
+  plazaTex.colorSpace = THREE.SRGBColorSpace; plazaTex.anisotropy = 8;
+  const plaza = new THREE.Mesh(new THREE.CircleGeometry(26, 48),
+    new THREE.MeshStandardMaterial({ map: plazaTex, roughness: .85 }));
+  plaza.rotation.x = -Math.PI/2;
+  plaza.position.copy(pointAt(FLAG_S + 5, new THREE.Vector3())); plaza.position.y = 0.015;
+  scene.add(plaza);
+}
+
+/* ---- shared materials ---- */
+const MAT = {
+  sandstone: new THREE.MeshStandardMaterial({ color:'#c89b62', roughness:.9 }),
+  sandDark:  new THREE.MeshStandardMaterial({ color:'#8C5A2B', roughness:.9 }),
+  cracked:   new THREE.MeshStandardMaterial({ color:'#93826b', roughness:.95 }),
+  colonial:  new THREE.MeshStandardMaterial({ color:'#b9c0c6', roughness:.8 }),
+  slate:     new THREE.MeshStandardMaterial({ color:'#5A6B7A', roughness:.85 }),
+  brick:     new THREE.MeshStandardMaterial({ color:'#7A3B2E', roughness:.9 }),
+  iron:      new THREE.MeshStandardMaterial({ color:'#2e3338', roughness:.6, metalness:.6 }),
+  gold:      new THREE.MeshStandardMaterial({ color:'#c9a13b', roughness:.35, metalness:.85 }),
+  marble:    new THREE.MeshStandardMaterial({ color:'#f3efe6', roughness:.55 }),
+  wood:      new THREE.MeshStandardMaterial({ color:'#5d4123', roughness:.9 }),
+  darkWood:  new THREE.MeshStandardMaterial({ color:'#3a2a17', roughness:.9 }),
+  white:     new THREE.MeshStandardMaterial({ color:'#e9e7e0', roughness:.7 }),
+  charcoal:  new THREE.MeshStandardMaterial({ color:'#17110d', roughness:.95 }),
+  green:     new THREE.MeshStandardMaterial({ color:'#1d4a2a', roughness:.9 }),
+  panel:     new THREE.MeshStandardMaterial({ color:'#241b12', roughness:.85 }),
+};
+
+/* ---- cusped (scalloped, pointed) arch profile for Mughal gates ---- */
+function cuspedArchHole(halfW, springY, rise, cusps){
+  const p = new THREE.Path();
+  p.moveTo(-halfW, 0); p.lineTo(-halfW, springY);
+  const N = 40;
+  for (let i = 0; i <= N; i++){
+    const th = Math.PI * (1 - i/N);
+    const scallop = 1 + 0.05*Math.abs(Math.sin(cusps*th));
+    const apex    = 1 + 0.28*Math.pow(Math.sin(th), 6);   // gives the pointed Indo-Islamic profile
+    p.lineTo(Math.cos(th)*halfW*scallop, springY + Math.sin(th)*rise*scallop*apex);
+  }
+  p.lineTo(halfW, 0); p.closePath();
+  return p;
+}
+function gateGeometry(outerHalfW, height, holeHalfW, springY, rise){
+  const shape = new THREE.Shape();
+  shape.moveTo(-outerHalfW, 0); shape.lineTo(-outerHalfW, height);
+  shape.lineTo(outerHalfW, height); shape.lineTo(outerHalfW, 0); shape.closePath();
+  shape.holes.push(cuspedArchHole(holeHalfW, springY, rise, 9));
+  const g = new THREE.ExtrudeGeometry(shape, { depth:0.8, bevelEnabled:false });
+  g.translate(0, 0, -0.4);
+  return g;
+}
+
+/* ---- instanced era architecture (perf: single draw call each) ---- */
+const dummy = new THREE.Object3D();
+function placeAlong(list, mesh){                 // list: [{s, side?, yaw?, y?, scale?}]
+  list.forEach((it, i) => {
+    pointAt(it.s, _p); tangentAt(it.s, _t);
+    if (it.side){ sideAt(it.s, _side); _p.addScaledVector(_side, it.side); }
+    dummy.position.set(_p.x, it.y||0, _p.z);
+    dummy.rotation.set(0, Math.atan2(_t.x, _t.z) + (it.yaw||0), it.roll||0);
+    dummy.scale.setScalar(it.scale||1);
+    dummy.updateMatrix();
+    mesh.setMatrixAt(i, dummy.matrix);
+  });
+  mesh.instanceMatrix.needsUpdate = true;
+  mesh.count = list.length;
+  scene.add(mesh);
+}
+function buildArchitecture(){
+  // Mughal gates spanning the walkway (zones 1–2), instanced.
+  // Placed at station midpoints (stations sit at s = 20 + 14i) so no gate occludes a frame.
+  const gateGeo = gateGeometry(5.1, 7.4, 3.3, 3.5, 2.7);
+  const gates = [{ s: 7 }, { s: 14 }];
+  for (let s = FIRST_S + 6.5; s <= MUGHAL_END + 7; s += SPACING) gates.push({ s });
+  placeAlong(gates, new THREE.InstancedMesh(gateGeo, MAT.sandstone, gates.length));
+
+  // Transition zone: the same gates, cracked — tilted, sunken, discoloured
+  const cracked = [];
+  let flip = 1;
+  for (let s = S_TRANS + 6.5; s <= S_BRIT - 12; s += SPACING){
+    cracked.push({ s, roll: 0.05*flip, y:-0.55, yaw:0.06*flip }); flip *= -1;
+  }
+  placeAlong(cracked, new THREE.InstancedMesh(gateGeo, MAT.cracked, cracked.length));
+
+  // Mughal parapet blocks along walkway edges
+  const parapetGeo = new THREE.BoxGeometry(1.9, 0.42, 0.3);
+  const paraMat = new THREE.MeshStandardMaterial({ color:'#a8804f', roughness:.95 });
+  const para = [];
+  for (let s = 3; s <= MUGHAL_END + 9; s += 2.1){ para.push({ s, side:WALK_W/2+0.35 }); para.push({ s, side:-(WALK_W/2+0.35) }); }
+  placeAlong(para, new THREE.InstancedMesh(parapetGeo, paraMat, para.length));
+
+  // Charbagh hints in zone 2: cypress cones + green strips beside the path
+  const cypressGeo = new THREE.ConeGeometry(0.42, 2.4, 7);
+  cypressGeo.translate(0, 1.2, 0);
+  const cyp = [];
+  for (let s = sOf('akbar-1556') - 5; s <= MUGHAL_END + 7; s += 6){ cyp.push({ s, side:WALK_W/2+2.2 }); cyp.push({ s, side:-(WALK_W/2+2.2) }); }
+  placeAlong(cyp, new THREE.InstancedMesh(cypressGeo, MAT.green, cyp.length));
+
+  // British colonial columns (zone 4), instanced, with capitals
+  const colGeo = new THREE.CylinderGeometry(0.28, 0.34, 5.6, 10); colGeo.translate(0, 2.8, 0);
+  const capGeo = new THREE.BoxGeometry(0.95, 0.3, 0.95);          capGeo.translate(0, 5.75, 0);
+  const cols = [];
+  for (let s = S_BRIT - 6; s <= S_CROWNST + 8; s += 7){ cols.push({ s, side:WALK_W/2+1.1 }); cols.push({ s, side:-(WALK_W/2+1.1) }); }
+  placeAlong(cols, new THREE.InstancedMesh(colGeo, MAT.colonial, cols.length));
+  placeAlong(cols, new THREE.InstancedMesh(capGeo, MAT.slate, cols.length));
+
+  // Railway-iron railings along zone 4 edges
+  const barGeo  = new THREE.BoxGeometry(0.06, 0.06, 6.8); barGeo.translate(0, 0.85, 0);
+  const bar2    = barGeo.clone(); bar2.translate(0, -0.35, 0);
+  const postGeo = new THREE.CylinderGeometry(0.05, 0.05, 1.0, 6); postGeo.translate(0, 0.5, 0);
+  const rails = [], posts = [];
+  for (let s = S_BRIT - 8; s <= S_CROWNST + 8; s += 7){
+    rails.push({ s, side:WALK_W/2+0.5 }); rails.push({ s, side:-(WALK_W/2+0.5) });
+  }
+  for (let s = S_BRIT - 8; s <= S_CROWNST + 10; s += 3.5){
+    posts.push({ s, side:WALK_W/2+0.5 }); posts.push({ s, side:-(WALK_W/2+0.5) });
+  }
+  placeAlong(rails, new THREE.InstancedMesh(barGeo, MAT.iron, rails.length));
+  placeAlong(rails, new THREE.InstancedMesh(bar2,   MAT.iron, rails.length));
+  placeAlong(posts, new THREE.InstancedMesh(postGeo, MAT.iron, posts.length));
+
+  // Freedom-era: clean white posts with a tricolour band
+  const postW = new THREE.CylinderGeometry(0.09, 0.12, 2.1, 8); postW.translate(0, 1.05, 0);
+  const free = [];
+  for (let s = S_FREE + 4; s <= FLAG_S - 45; s += 9){ free.push({ s, side:WALK_W/2+0.8 }); free.push({ s, side:-(WALK_W/2+0.8) }); }
+  placeAlong(free, new THREE.InstancedMesh(postW, MAT.white, free.length));
+  const bandGeo = new THREE.CylinderGeometry(0.115, 0.115, 0.3, 8); bandGeo.translate(0, 1.85, 0);
+  placeAlong(free, new THREE.InstancedMesh(bandGeo,
+    new THREE.MeshStandardMaterial({ color:'#FF9933', roughness:.7 }), free.length));
+}
+
+/* ========================= 4. STATIONS ============================
+   Everything below renders by mapping over TIMELINE — frames, floor
+   year plates, symbolic props, HTML cards.                        */
+function canvasTexture(w, h, draw){
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  draw(cv.getContext('2d'), w, h);
+  const tx = new THREE.CanvasTexture(cv);
+  tx.colorSpace = THREE.SRGBColorSpace;
+  tx.anisotropy = 4;
+  return tx;
+}
+function yearPlate(st){       // glowing year text inlaid in the walkway
+  const tex = canvasTexture(512, 256, (ctx,w,h) => {
+    ctx.fillStyle = 'rgba(10,6,3,0.55)';
+    ctx.beginPath(); ctx.roundRect(14,14,w-28,h-28,26); ctx.fill();
+    ctx.strokeStyle = st.accent; ctx.lineWidth = 5; ctx.stroke();
+    ctx.shadowColor = st.accent; ctx.shadowBlur = 34;
+    ctx.fillStyle = '#fff6e2';
+    let size = st.year.length > 6 ? 88 : 120;
+    ctx.font = `700 ${size}px Georgia, serif`;
+    const tw = ctx.measureText(st.year).width;              // shrink to fit the plate
+    if (tw > 430){ size = Math.floor(size * 430 / tw); ctx.font = `700 ${size}px Georgia, serif`; }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(st.year, w/2, h/2+6);
+  });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.3),
+    new THREE.MeshBasicMaterial({ map:tex, transparent:true, toneMapped:false, depthWrite:false }));
+  m.rotation.x = -Math.PI/2;
+  return m;
+}
+
+/* ---- GALLERY GLASS -----------------------------------------------
+   Each station frame holds a real framed picture: a mat board, the
+   artwork itself, a gilt/iron inner moulding, and a glass pane with
+   an angled sheen. The artwork starts as the procedural vignette and
+   is swapped for the historical photograph once it downloads, so the
+   gallery is complete before — and even without — the network.    */
+const UNIT_PLANE = new THREE.PlaneGeometry(1, 1);
+const GLASS_MAT = new THREE.MeshBasicMaterial({
+  map: canvasTexture(256, 256, (c, w, h) => {
+    const g = c.createLinearGradient(0, h, w, 0);
+    [[0,0],[.40,0],[.47,.42],[.53,.06],[.60,.24],[.68,0],[1,0]]
+      .forEach(([p,a]) => g.addColorStop(p, `rgba(255,255,255,${a})`));
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+  }),
+  transparent: true, opacity: .5, depthWrite: false,
+  blending: THREE.AdditiveBlending, toneMapped: false,
+});
+const texLoader = new THREE.TextureLoader();
+texLoader.setCrossOrigin('anonymous');
+const ART_PICKS = [];                 // every framed picture, clickable in 3D
+
+function artPanel(st, boxW, boxH, y, z, gilt){
+  const g = new THREE.Group(); g.position.set(0, y, z);
+  const board = new THREE.Mesh(new THREE.PlaneGeometry(boxW + .22, boxH + .22),
+    new THREE.MeshStandardMaterial({ color:'#181310', roughness:.92,
+      emissive:new THREE.Color(st.accent), emissiveIntensity:.10 }));
+  g.add(board);
+  // pictures carry a little of their own light, the way a gallery lights
+  // its walls — otherwise the 1857 red and the hushed stations swallow them
+  const vigTex = new THREE.CanvasTexture(stationArtCanvas(st));
+  vigTex.colorSpace = THREE.SRGBColorSpace;
+  const picMat = new THREE.MeshStandardMaterial({
+    map: vigTex, emissiveMap: vigTex, roughness:.6,
+    emissive: 0xffffff, emissiveIntensity: .42 });
+  const pic = new THREE.Mesh(UNIT_PLANE, picMat); pic.position.z = .012; g.add(pic);
+  ART_PICKS.push({ mesh: pic, st });
+  const moulding = gilt ? MAT.gold : MAT.iron;
+  const bars = [0,1,2,3].map(() => { const b = new THREE.Mesh(UNIT_PLANE, moulding);
+    b.position.z = .022; g.add(b); return b; });
+  const glass = new THREE.Mesh(UNIT_PLANE, GLASS_MAT); glass.position.z = .05; g.add(glass);
+
+  const layout = aspect => {
+    let w = boxW, h = w / aspect;
+    if (h > boxH){ h = boxH; w = h * aspect; }
+    pic.scale.set(w, h, 1); glass.scale.set(w, h, 1);
+    const t = .05;
+    bars[0].scale.set(w + 2*t, t, 1); bars[0].position.set(0,  h/2 + t/2, .022);
+    bars[1].scale.set(w + 2*t, t, 1); bars[1].position.set(0, -h/2 - t/2, .022);
+    bars[2].scale.set(t, h, 1);       bars[2].position.set(-w/2 - t/2, 0, .022);
+    bars[3].scale.set(t, h, 1);       bars[3].position.set( w/2 + t/2, 0, .022);
+  };
+  layout(AW / AH);
+  let photoTex = null;
+  return {
+    grp: g,
+    apply(tex){ photoTex = tex; picMat.map = tex; picMat.emissiveMap = tex;
+      picMat.needsUpdate = true;
+      layout((tex.image.width || AW) / (tex.image.height || AH)); },
+    revert(){ if (!photoTex) return;
+      picMat.map = vigTex; picMat.emissiveMap = vigTex; picMat.needsUpdate = true;
+      photoTex.dispose(); photoTex = null; layout(AW / AH); },
+  };
+}
+
+/* Lazy photo loading: a station's picture downloads only as the
+   visitor draws near, so the walk starts instantly and mobile data
+   is spent only on what is actually seen.                        */
+function ensureArt(stn){
+  const st = stn.st;
+  if (st._artState) return;
+  const rec = PHOTOS[st.id];
+  if (!rec || !stn.artSlots || !stn.artSlots.length){ st._artState = 'skip'; return; }
+  st._artState = 'loading';
+  texLoader.load(rec.url,
+    tex => { tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+             st._artState = 'ok';
+             stn.artSlots.forEach(slot => slot.apply(tex)); },
+    undefined,
+    () => { st._artState = 'fail'; });        // keeps the procedural vignette
+}
+/* Free a picture the visitor has walked well past, so the gallery
+   holds only a handful of full-size textures at a time (the frame
+   falls back to its vignette and reloads if they walk back).    */
+function releaseArt(stn){
+  if (stn.st._artState !== 'ok') return;
+  stn.artSlots.forEach(slot => slot.revert());
+  stn.st._artState = undefined;
+}
+
+/* ---- era-styled frames (each holds one glazed picture) ---- */
+function mughalFrame(st){
+  const grp = new THREE.Group();
+  const shape = new THREE.Shape();
+  shape.moveTo(-1.7,0); shape.lineTo(-1.7,4.35); shape.lineTo(1.7,4.35); shape.lineTo(1.7,0); shape.closePath();
+  shape.holes.push(cuspedArchHole(1.15, 2.25, 1.15, 7));
+  const arch = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth:.3, bevelEnabled:false }), MAT.sandstone);
+  arch.position.z = -.15; grp.add(arch);
+  const art = artPanel(st, 1.8, 2.0, 1.8, -.12, true);
+  grp.add(art.grp);
+  const fin = new THREE.Mesh(new THREE.SphereGeometry(.16, 10, 8), MAT.gold);
+  fin.position.y = 4.55; grp.add(fin);
+  return { grp, anchorY: 3.1, art };
+}
+function britishFrame(st){
+  const grp = new THREE.Group();
+  const mk = (g, m, x, y, z) => { const q = new THREE.Mesh(g, m); q.position.set(x, y, z); grp.add(q); return q; };
+  mk(new THREE.BoxGeometry(3.9,.35,1.0), MAT.slate, 0, .17, 0);                       // plinth
+  mk(new THREE.CylinderGeometry(.14,.16,3.3,10), MAT.colonial, -1.55, 2.0, 0);
+  mk(new THREE.CylinderGeometry(.14,.16,3.3,10), MAT.colonial,  1.55, 2.0, 0);
+  mk(new THREE.BoxGeometry(3.9,.3,.7), MAT.colonial, 0, 3.8, 0);                      // entablature
+  const ped = new THREE.Shape();                                                       // pediment
+  ped.moveTo(-1.95,0); ped.lineTo(1.95,0); ped.lineTo(0,.85); ped.closePath();
+  const pm = new THREE.Mesh(new THREE.ExtrudeGeometry(ped,{depth:.5,bevelEnabled:false}), MAT.slate);
+  pm.position.set(0,3.95,-.25); grp.add(pm);
+  const art = artPanel(st, 2.2, 2.3, 2.1, -.12, false);
+  grp.add(art.grp);
+  return { grp, anchorY: 3.3, art };
+}
+function freedomFrame(st){
+  const grp = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.BoxGeometry(2.8,.5,1.1), MAT.white); base.position.y=.25; grp.add(base);
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(2.5,3.1,.18), new THREE.MeshStandardMaterial({
+    color:'#efede6', roughness:.7, emissive:new THREE.Color(st.accent), emissiveIntensity:.06 }));
+  slab.position.y = 2.05; grp.add(slab);
+  const stripe = new THREE.Mesh(new THREE.BoxGeometry(2.5,.1,.2),
+    new THREE.MeshStandardMaterial({ color:st.accent, roughness:.6 }));
+  stripe.position.set(0,3.62,.0); grp.add(stripe);
+  const art = artPanel(st, 2.0, 2.2, 2.05, .11, false);
+  grp.add(art.grp);
+  return { grp, anchorY: 2.9, art };
+}
+function flashbackFrame(st){     // 1600 EIC charter: a parchment out of time
+  const grp = new THREE.Group();
+  const backing = new THREE.Mesh(new THREE.PlaneGeometry(2.15,2.75),
+    new THREE.MeshStandardMaterial({ color:'#d8c49a', roughness:.9 }));
+  backing.position.y = 2.1; grp.add(backing);
+  const fr = new THREE.Mesh(new THREE.BoxGeometry(2.35,3.0,.14), MAT.darkWood);
+  fr.position.set(0,2.1,-.09); grp.add(fr);
+  const art = artPanel(st, 1.8, 2.2, 2.1, .02, true);
+  grp.add(art.grp);
+  const seal = new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,.03,14),
+    new THREE.MeshStandardMaterial({ color:'#8d1f1f', roughness:.6 }));
+  seal.rotation.x = Math.PI/2; seal.position.set(.78,.82,.06); grp.add(seal);
+  grp.rotation.z = 0.045;
+  return { grp, anchorY: 3.0, art };
+}
+
+/* ---- symbolic props (procedural primitives only) ---- */
+function makeCrown(){
+  const crown = new THREE.Group();
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(.42,.46,.3,16), MAT.gold); crown.add(band);
+  for (let i=0;i<8;i++){ const a=i*Math.PI/4;
+    const pt = new THREE.Mesh(new THREE.ConeGeometry(.09,.3,6), MAT.gold);
+    pt.position.set(.4*Math.cos(a), .3, .4*Math.sin(a)); crown.add(pt); }
+  [0,Math.PI/2].forEach(rot => {
+    const arc = new THREE.Mesh(new THREE.TorusGeometry(.4,.045,8,14,Math.PI), MAT.gold);
+    arc.rotation.y = rot; arc.position.y = .3; crown.add(arc); });
+  const orb = new THREE.Mesh(new THREE.SphereGeometry(.09,10,8), MAT.gold); orb.position.y=.78; crown.add(orb);
+  return crown;
+}
+const STEEL = new THREE.MeshStandardMaterial({ color:'#c8ccd2', metalness:.8, roughness:.35 });
+const DARKSTONE = new THREE.MeshStandardMaterial({ color:'#2b2d30', roughness:.9 });
+const FLAME = () => new THREE.MeshBasicMaterial({ color:'#ffb066', toneMapped:false });
+const PROPS = {
+  scrolls(){ const g = new THREE.Group();                                 // firmans, acts, charters
+    const desk = new THREE.Mesh(new THREE.BoxGeometry(.9,.5,.55), MAT.darkWood); desk.position.y=.25; g.add(desk);
+    const pm = new THREE.MeshStandardMaterial({ color:'#e4d6b0', roughness:.85 });
+    [[-.2,.58,0,0],[.15,.58,.15,.4],[0,.66,-.1,-.3]].forEach(([x,y,z,ry]) => {
+      const sc = new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.7,8), pm);
+      sc.rotation.z = Math.PI/2; sc.rotation.y = ry; sc.position.set(x,y,z); g.add(sc); });
+    const seal = new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.02,8),
+      new THREE.MeshStandardMaterial({ color:'#8d1f1f', roughness:.6 }));
+    seal.position.set(.28,.6,.2); g.add(seal);
+    return g; },
+  book(){ const g = new THREE.Group();                                    // reform & new learning
+    const plinth = new THREE.Mesh(new THREE.BoxGeometry(.7,.75,.5), MAT.sandstone); plinth.position.y=.37; g.add(plinth);
+    const pm = new THREE.MeshStandardMaterial({ color:'#efe9d8', roughness:.9 });
+    [[-.17,.12],[.17,-.12]].forEach(([x,rz]) => {
+      const page = new THREE.Mesh(new THREE.BoxGeometry(.36,.04,.5), pm);
+      page.rotation.z = rz; page.position.set(x,.81,0); g.add(page); });
+    const lamp = new THREE.Mesh(new THREE.CylinderGeometry(.05,.08,.12,8), MAT.gold); lamp.position.set(.5,.06,.2); g.add(lamp);
+    const fl = new THREE.Mesh(new THREE.ConeGeometry(.03,.09,6), FLAME()); fl.position.set(.5,.17,.2); g.add(fl);
+    return g; },
+  bowl(){ const g = new THREE.Group();                                    // famine memorial: an empty bowl
+    const base = new THREE.Mesh(new THREE.BoxGeometry(.8,.18,.8), DARKSTONE); base.position.y=.09; g.add(base);
+    const b = new THREE.Mesh(new THREE.CylinderGeometry(.3,.16,.2,14,1,true),
+      new THREE.MeshStandardMaterial({ color:'#8a7a64', roughness:.95, side:THREE.DoubleSide }));
+    b.position.y=.28; g.add(b);
+    const bottom = new THREE.Mesh(new THREE.CircleGeometry(.16,14),
+      new THREE.MeshStandardMaterial({ color:'#6a5c4a', roughness:1 }));
+    bottom.rotation.x = -Math.PI/2; bottom.position.y=.19; g.add(bottom);
+    return g; },
+  flames3(){ const g = new THREE.Group();                                 // three martyrs' flames
+    const plinth = new THREE.Mesh(new THREE.BoxGeometry(1.15,.3,.4), DARKSTONE); plinth.position.y=.15; g.add(plinth);
+    [-.35,0,.35].forEach(x => {
+      const cup = new THREE.Mesh(new THREE.CylinderGeometry(.08,.05,.07,8), MAT.iron); cup.position.set(x,.34,0); g.add(cup);
+      const fl = new THREE.Mesh(new THREE.ConeGeometry(.045,.13,6), FLAME()); fl.position.set(x,.44,0); g.add(fl); });
+    return g; },
+  crown(){ const g = new THREE.Group();                                   // Empress of India
+    const ped = new THREE.Mesh(new THREE.CylinderGeometry(.35,.45,.9,10), MAT.marble); ped.position.y=.45; g.add(ped);
+    const cr = makeCrown(); cr.scale.setScalar(.8); cr.position.y = 1.05; g.add(cr);
+    return g; },
+  khanda(){ const g = new THREE.Group();                                  // the Khalsa
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(.3,.38,.25,10), MAT.sandstone); base.position.y=.12; g.add(base);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(.4,.035,8,24), STEEL); ring.position.y=1.0; g.add(ring);
+    const blade = new THREE.Mesh(new THREE.ConeGeometry(.075,.95,4), STEEL); blade.position.y=1.15; g.add(blade);
+    const hilt = new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.3,6), STEEL); hilt.position.y=.55; g.add(hilt);
+    [1,-1].forEach(d => { const sw = new THREE.Mesh(new THREE.TorusGeometry(.5,.028,6,14,Math.PI*.75), STEEL);
+      sw.rotation.z = d > 0 ? -.5 : Math.PI + .5; sw.position.set(d*.12,.95,-.05); g.add(sw); });
+    return g; },
+  swords(){ const g = new THREE.Group();                                  // crossed talwars
+    const stand = new THREE.Mesh(new THREE.BoxGeometry(.7,.14,.4), MAT.darkWood); stand.position.y=.07; g.add(stand);
+    [.5,-.5].forEach(rz => {
+      const bl = new THREE.Mesh(new THREE.BoxGeometry(.05,1.3,.02), STEEL);
+      bl.rotation.z = rz; bl.position.y = .8; g.add(bl);
+      const gd = new THREE.Mesh(new THREE.BoxGeometry(.2,.04,.06), MAT.gold);
+      gd.rotation.z = rz; gd.position.set(Math.sin(rz)*.45, .8 - Math.cos(rz)*.45, 0); g.add(gd); });
+    return g; },
+  hillfort(accent){ const g = new THREE.Group();                          // Maratha hill fort
+    const hill = new THREE.Mesh(new THREE.ConeGeometry(.9,.9,7),
+      new THREE.MeshStandardMaterial({ color:'#6a5b44', roughness:1 }));
+    hill.position.y=.45; g.add(hill);
+    const keep = new THREE.Mesh(new THREE.BoxGeometry(.5,.3,.5), MAT.sandDark); keep.position.y=1.0; g.add(keep);
+    const tower = new THREE.Mesh(new THREE.BoxGeometry(.16,.28,.16), MAT.sandDark); tower.position.set(.2,1.24,.15); g.add(tower);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(.015,.015,.5,5), MAT.darkWood); pole.position.set(-.1,1.4,0); g.add(pole);
+    const fl = new THREE.Mesh(new THREE.PlaneGeometry(.3,.16),
+      new THREE.MeshStandardMaterial({ color:accent||'#E07B39', side:THREE.DoubleSide, roughness:.8 }));
+    fl.position.set(.06,1.58,0); g.add(fl);
+    return g; },
+  bonfire(){ const g = new THREE.Group();                                 // Swadeshi: foreign cloth burns
+    [.4,-.3,.9].forEach(ry => { const log = new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.8,6), MAT.darkWood);
+      log.rotation.set(Math.PI/2.4, ry, 0); log.position.y=.15; g.add(log); });
+    const fl = new THREE.Mesh(new THREE.ConeGeometry(.22,.6,7),
+      new THREE.MeshBasicMaterial({ color:'#ff8844', toneMapped:false })); fl.position.y=.5; g.add(fl);
+    const fl2 = new THREE.Mesh(new THREE.ConeGeometry(.12,.4,6),
+      new THREE.MeshBasicMaterial({ color:'#ffd077', toneMapped:false })); fl2.position.y=.62; g.add(fl2);
+    const bale = new THREE.Mesh(new THREE.BoxGeometry(.4,.28,.3),
+      new THREE.MeshStandardMaterial({ color:'#b8a88c', roughness:.95 })); bale.position.set(.55,.14,.2); g.add(bale);
+    return g; },
+  loco(){ const g = PROPS.rail();                                         // 1853: engine on the new rails
+    const boiler = new THREE.Mesh(new THREE.CylinderGeometry(.17,.17,.8,10), MAT.iron);
+    boiler.rotation.z = Math.PI/2; boiler.position.set(-.3,.5,0); g.add(boiler);
+    const cab = new THREE.Mesh(new THREE.BoxGeometry(.4,.45,.36), MAT.iron); cab.position.set(.35,.55,0); g.add(cab);
+    const funnel = new THREE.Mesh(new THREE.CylinderGeometry(.05,.07,.25,8), MAT.iron); funnel.position.set(-.6,.78,0); g.add(funnel);
+    [-.55,-.15,.3].forEach(x => { const wh = new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,.05,10), MAT.charcoal);
+      wh.rotation.x = Math.PI/2; wh.position.set(x,.3,.19); g.add(wh);
+      const wh2 = wh.clone(); wh2.position.z = -.19; g.add(wh2); });
+    return g; },
+  cannon(){ const g = new THREE.Group();
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(.07,.12,1.15,10), MAT.iron);
+    barrel.rotation.x = -1.15; barrel.position.set(0,.52,.1); g.add(barrel);
+    const cart = new THREE.Mesh(new THREE.BoxGeometry(.5,.16,.7), MAT.wood); cart.position.y=.3; g.add(cart);
+    [-.3,.3].forEach(x => { const w = new THREE.Mesh(new THREE.CylinderGeometry(.26,.26,.07,12), MAT.darkWood);
+      w.rotation.z = Math.PI/2; w.position.set(x,.26,0); g.add(w); });
+    return g; },
+  scales(){ const g = new THREE.Group();                                  // Jahangir's chain of justice
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(.05,.07,1.9,8), MAT.gold); post.position.y=.95; g.add(post);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(1.3,.05,.05), MAT.gold); arm.position.y=1.85; g.add(arm);
+    [-.6,.6].forEach(x => {
+      const ch = new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,.5,6), MAT.gold);
+      ch.position.set(x,1.6,0); g.add(ch);
+      const pan = new THREE.Mesh(new THREE.CylinderGeometry(.2,.16,.06,12), MAT.gold);
+      pan.position.set(x,1.32,0); g.add(pan); });
+    for (let i=0;i<6;i++){ const bell = new THREE.Mesh(new THREE.SphereGeometry(.045,8,6), MAT.gold);
+      bell.position.set(-.15+i*.06, 1.85-i*.24, .12); g.add(bell); }
+    return g; },
+  ship(scale=1){ const g = new THREE.Group();                             // East India Company merchantman
+    const hull = new THREE.Mesh(new THREE.BoxGeometry(1.7,.32,.5), MAT.darkWood); hull.position.y=.36; g.add(hull);
+    const bowS = new THREE.Shape(); bowS.moveTo(0,0); bowS.lineTo(.55,.16); bowS.lineTo(0,.32); bowS.closePath();
+    const bow = new THREE.Mesh(new THREE.ExtrudeGeometry(bowS,{depth:.5,bevelEnabled:false}), MAT.darkWood);
+    bow.position.set(.85,.2,-.25); g.add(bow);
+    const stripes = canvasTexture(64,64,(c)=>{ for(let i=0;i<8;i++){ c.fillStyle=i%2?'#fff':'#c03030'; c.fillRect(0,i*8,64,8); }});
+    [-.35,.3].forEach((x,i) => {
+      const mast = new THREE.Mesh(new THREE.CylinderGeometry(.025,.03,1.5,6), MAT.wood);
+      mast.position.set(x,1.15,0); g.add(mast);
+      const sail = new THREE.Mesh(new THREE.PlaneGeometry(.55,.7),
+        new THREE.MeshStandardMaterial({ color:'#e8e2d2', side:THREE.DoubleSide, roughness:.9 }));
+      sail.position.set(x,1.2,.02); sail.rotation.y = .12; g.add(sail);
+      if (i===1){ const fl = new THREE.Mesh(new THREE.PlaneGeometry(.3,.18),
+        new THREE.MeshBasicMaterial({ map:stripes, side:THREE.DoubleSide }));
+        fl.position.set(x+.17,1.95,0); g.add(fl); } });
+    g.scale.setScalar(scale); return g; },
+  milestone(){ const g = new THREE.Group();                               // kos minar + rupiya coins
+    const minar = new THREE.Mesh(new THREE.CylinderGeometry(.16,.3,1.35,8), MAT.sandstone); minar.position.y=.68; g.add(minar);
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(.17,8,6), MAT.sandstone); cap.position.y=1.4; g.add(cap);
+    for (let i=0;i<3;i++){ const coin = new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,.035,14),
+      new THREE.MeshStandardMaterial({ color:'#cfd2d6', metalness:.9, roughness:.3 }));
+      coin.position.set(.5, .04+i*.04, .18); g.add(coin); }
+    return g; },
+  coins(){ const g = new THREE.Group();                                   // Diwani: treasure + firman scroll
+    for (let i=0;i<5;i++){ const c2 = new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,.04,14), MAT.gold);
+      c2.position.set((i%2)*.25-.1, .05+Math.floor(i/2)*.05, (i%3)*.14-.1); g.add(c2); }
+    const scroll = new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.9,10),
+      new THREE.MeshStandardMaterial({ color:'#e4d6b0', roughness:.85 }));
+    scroll.rotation.z = Math.PI/2.15; scroll.position.set(0,.42,-.15); g.add(scroll);
+    const chest = new THREE.Mesh(new THREE.BoxGeometry(.6,.35,.4), MAT.darkWood); chest.position.set(-.4,.18,.15); g.add(chest);
+    return g; },
+  brokenPillar(){ const g = new THREE.Group();
+    const stump = new THREE.Mesh(new THREE.CylinderGeometry(.22,.26,1.05,10), MAT.cracked); stump.position.y=.53; g.add(stump);
+    const fallen = new THREE.Mesh(new THREE.CylinderGeometry(.2,.22,1.2,10), MAT.cracked);
+    fallen.rotation.set(0,.4,Math.PI/2.05); fallen.position.set(.75,.22,.35); g.add(fallen);
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(.55,.16,.55), MAT.cracked);
+    cap.rotation.z=.3; cap.position.set(-.35,.18,-.25); g.add(cap);
+    return g; },
+  throne(){ const g = new THREE.Group();                                  // the lost Peacock Throne
+    const base = new THREE.Mesh(new THREE.BoxGeometry(.95,.32,.6), MAT.gold); base.position.y=.36; g.add(base);
+    const back = new THREE.Mesh(new THREE.CircleGeometry(.5,20,0,Math.PI), MAT.gold);
+    back.position.set(0,.75,-.26); g.add(back);
+    const gem = new THREE.Mesh(new THREE.OctahedronGeometry(.09),
+      new THREE.MeshStandardMaterial({ color:'#3fae6a', metalness:.4, roughness:.2,
+        emissive:'#1f5c38', emissiveIntensity:.5 }));
+    gem.position.set(0,.95,-.2); g.add(gem);
+    [-.4,.4].forEach(x => [-.22,.22].forEach(z => {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(.05,.04,.2,8), MAT.gold);
+      leg.position.set(x,.1,z); g.add(leg); }));
+    return g; },
+  rockets(){ const g = new THREE.Group();                                 // Mysorean rockets
+    const stand = new THREE.Mesh(new THREE.BoxGeometry(.7,.1,.5), MAT.wood); stand.position.y=.3; g.add(stand);
+    [-.18,0,.18].forEach((x,i) => {
+      const r = new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,.9,8), MAT.iron);
+      r.rotation.x = -.8; r.position.set(x,.62,.1+i*.03); g.add(r);
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(.05,.14,8),
+        new THREE.MeshStandardMaterial({ color:'#8d2f1f', roughness:.6 }));
+      tip.rotation.x = -.8; tip.position.set(x, .62+.47*Math.cos(.8), .1+i*.03+.47*Math.sin(.8)); g.add(tip); });
+    return g; },
+  rail(){ const g = new THREE.Group();                                    // 1853: first railway
+    const bed = new THREE.Mesh(new THREE.BoxGeometry(2.1,.12,.9), MAT.charcoal); bed.position.y=.06; g.add(bed);
+    [-.28,.28].forEach(z => { const rl = new THREE.Mesh(new THREE.BoxGeometry(2.1,.07,.07), MAT.iron);
+      rl.position.set(0,.2,z); g.add(rl); });
+    for (let i=0;i<6;i++){ const sl = new THREE.Mesh(new THREE.BoxGeometry(.16,.06,.8), MAT.wood);
+      sl.position.set(-.85+i*.34,.14,0); g.add(sl); }
+    return g; },
+  charred(){ const g = new THREE.Group();                                 // 1857: scorched beams
+    const b1 = new THREE.Mesh(new THREE.BoxGeometry(.22,1.7,.22), MAT.charcoal);
+    b1.rotation.z = .5; b1.position.set(0,.7,0); g.add(b1);
+    const b2 = new THREE.Mesh(new THREE.BoxGeometry(.2,1.4,.2), MAT.charcoal);
+    b2.rotation.z = -.8; b2.rotation.y = .5; b2.position.set(.45,.5,.2); g.add(b2);
+    const b3 = new THREE.Mesh(new THREE.BoxGeometry(.24,1.1,.2), MAT.charcoal);
+    b3.rotation.x = 1.4; b3.position.set(-.3,.12,.3); g.add(b3);
+    for (let i=0;i<5;i++){ const em = new THREE.Mesh(new THREE.SphereGeometry(.035,6,5),
+      new THREE.MeshBasicMaterial({ color:'#ff5522', toneMapped:false }));
+      em.position.set(Math.sin(i*2.1)*.5, .05, Math.cos(i*1.7)*.4); g.add(em); }
+    return g; },
+  memorial(){ const g = new THREE.Group();                                // 1919: quiet, restrained
+    const stone = new THREE.Mesh(new THREE.BoxGeometry(.9,1.15,.35),
+      new THREE.MeshStandardMaterial({ color:'#2b2d30', roughness:.9 }));
+    stone.position.y=.58; g.add(stone);
+    const flame = new THREE.Mesh(new THREE.ConeGeometry(.05,.14,8),
+      new THREE.MeshBasicMaterial({ color:'#ffb066', toneMapped:false }));
+    flame.position.y=1.28; g.add(flame);
+    const bowl = new THREE.Mesh(new THREE.CylinderGeometry(.09,.06,.07,10), MAT.iron);
+    bowl.position.y=1.19; g.add(bowl);
+    return g; },
+  charkha(){ const g = new THREE.Group();                                 // the spinning wheel
+    const plank = new THREE.Mesh(new THREE.BoxGeometry(1.5,.09,.4), MAT.wood); plank.position.y=.12; g.add(plank);
+    const wheel = new THREE.Mesh(new THREE.TorusGeometry(.42,.035,10,26), MAT.darkWood);
+    wheel.position.set(-.4,.62,0); g.add(wheel);
+    for (let i=0;i<8;i++){ const sp = new THREE.Mesh(new THREE.CylinderGeometry(.014,.014,.78,5), MAT.wood);
+      sp.position.set(-.4,.62,0); sp.rotation.z = i*Math.PI/8; g.add(sp); }
+    const spindle = new THREE.Mesh(new THREE.TorusGeometry(.1,.02,8,16), MAT.darkWood);
+    spindle.position.set(.5,.3,0); g.add(spindle);
+    const thread = new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.92,4),
+      new THREE.MeshBasicMaterial({ color:'#e8e2d2' }));
+    thread.rotation.z = Math.PI/2 - .35; thread.position.set(.05,.5,0); g.add(thread);
+    return g; },
+  salt(){ const g = new THREE.Group();                                    // a handful of salt, Dandi
+    const mound = new THREE.Mesh(new THREE.ConeGeometry(.5,.5,14),
+      new THREE.MeshStandardMaterial({ color:'#f4f2ec', roughness:.95 }));
+    mound.position.y=.25; g.add(mound);
+    for (let i=0;i<7;i++){ const gr = new THREE.Mesh(new THREE.SphereGeometry(.035,5,4), MAT.white);
+      gr.position.set(Math.sin(i*2.3)*.55, .03, Math.cos(i*1.9)*.5); g.add(gr); }
+    return g; },
+  banner(accent){ const g = new THREE.Group();
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(.035,.05,2.3,8), MAT.darkWood);
+    pole.position.y = 1.15; g.add(pole);
+    const flag = new THREE.Mesh(new THREE.PlaneGeometry(.85,.5),
+      new THREE.MeshStandardMaterial({ color:accent, side:THREE.DoubleSide, roughness:.8 }));
+    flag.position.set(.45,2.0,0); g.add(flag);
+    return g; },
+};
+
+/* ---- the low-poly Taj Mahal: centrepiece of the Mughal half ---- */
+function buildTaj(){
+  const g = new THREE.Group();
+  const M = MAT.marble;
+  const plat = new THREE.Mesh(new THREE.BoxGeometry(7,.5,7), M); plat.position.y=.25; g.add(plat);
+  const block = new THREE.Mesh(new THREE.BoxGeometry(3.2,2.4,3.2), M); block.position.y=1.7; g.add(block);
+  // central iwan: dark pointed-arch recess
+  const iwanTex = canvasTexture(128,192,(c,w,h) => {
+    c.fillStyle='#f3efe6'; c.fillRect(0,0,w,h);
+    c.fillStyle='#3a3026'; c.beginPath();
+    c.moveTo(24,h); c.lineTo(24,86); c.quadraticCurveTo(24,34,64,22);
+    c.quadraticCurveTo(104,34,104,86); c.lineTo(104,h); c.closePath(); c.fill();
+  });
+  const iwan = new THREE.Mesh(new THREE.PlaneGeometry(1.7,2.3),
+    new THREE.MeshStandardMaterial({ map:iwanTex, roughness:.6 }));
+  iwan.position.set(0,1.75,1.62); g.add(iwan);
+  const drum = new THREE.Mesh(new THREE.CylinderGeometry(1.05,1.05,.5,18), M); drum.position.y=3.15; g.add(drum);
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(1.18,22,16), M);
+  dome.scale.y = 1.18; dome.position.y=3.85; g.add(dome);
+  const fin = new THREE.Mesh(new THREE.ConeGeometry(.07,.5,8), MAT.gold); fin.position.y=5.35; g.add(fin);
+  // corner chattris
+  [[-1.25,-1.25],[1.25,-1.25],[-1.25,1.25],[1.25,1.25]].forEach(([x,z]) => {
+    const c1 = new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,.5,8), M); c1.position.set(x,3.15,z); g.add(c1);
+    const d1 = new THREE.Mesh(new THREE.SphereGeometry(.34,10,8), M); d1.position.set(x,3.5,z); g.add(d1);
+  });
+  // four minarets
+  [[-3.1,-3.1],[3.1,-3.1],[-3.1,3.1],[3.1,3.1]].forEach(([x,z]) => {
+    const mn = new THREE.Mesh(new THREE.CylinderGeometry(.16,.22,3.4,10), M); mn.position.set(x,2.2,z); g.add(mn);
+    const md = new THREE.Mesh(new THREE.SphereGeometry(.24,10,8), M); md.position.set(x,4.0,z); g.add(md);
+    [1.2,2.1,3.0].forEach(y => { const ring = new THREE.Mesh(new THREE.TorusGeometry(.21,.03,6,12), M);
+      ring.rotation.x = Math.PI/2; ring.position.set(x,y,z); g.add(ring); });
+  });
+  return g;
+}
+
+/* ---- 1947 finale: tricolour with flag-wave shader + midnight clock ---- */
+let flagUniforms = null;
+function buildFinale(){
+  const g = new THREE.Group();
+  const tricolour = canvasTexture(512, 342, (c,w,h) => {
+    c.fillStyle = '#FF9933'; c.fillRect(0,0,w,h/3);
+    c.fillStyle = '#ffffff'; c.fillRect(0,h/3,w,h/3);
+    c.fillStyle = '#138808'; c.fillRect(0,2*h/3,w,h/3);
+    c.strokeStyle = '#000080'; c.lineWidth = 5;
+    const cx = w/2, cy = h/2, r = 48;
+    c.beginPath(); c.arc(cx,cy,r,0,7); c.stroke();
+    for (let i=0;i<24;i++){ const a = i*Math.PI/12;
+      c.beginPath(); c.moveTo(cx,cy); c.lineTo(cx+r*Math.cos(a), cy+r*Math.sin(a)); c.lineWidth=2; c.stroke(); }
+  });
+  flagUniforms = { uTime:{value:0}, uMap:{value:tricolour} };
+  const flagGeo = new THREE.PlaneGeometry(3.0, 2.0, 26, 14);
+  flagGeo.translate(1.5, 0, 0);                        // hoist edge at the pole
+  const flag = new THREE.Mesh(flagGeo, new THREE.ShaderMaterial({
+    uniforms: flagUniforms, side: THREE.DoubleSide,
+    vertexShader:`uniform float uTime; varying vec2 vUv; varying float vW;
+      void main(){ vUv = uv;
+        vec3 p = position;
+        float f = clamp(p.x/3.0, 0.0, 1.0);
+        float w = sin(p.x*2.6 - uTime*3.1) * 0.22 * f + sin(p.y*3.4 + uTime*2.1) * 0.05 * f;
+        p.z += w; vW = w;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }`,
+    fragmentShader:`uniform sampler2D uMap; varying vec2 vUv; varying float vW;
+      void main(){ vec3 col = texture2D(uMap, vUv).rgb * (0.86 + 0.45*vW);
+        gl_FragColor = vec4(col, 1.0); }`
+  }));
+  flag.position.y = 6.1; g.add(flag);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.07,.1,7.5,10),
+    new THREE.MeshStandardMaterial({ color:'#d8d8d8', metalness:.6, roughness:.4 }));
+  pole.position.y = 3.75; g.add(pole);
+  const poleBase = new THREE.Mesh(new THREE.CylinderGeometry(.7,.9,.6,12), MAT.marble);
+  poleBase.position.y = .3; g.add(poleBase);
+  // the clock at midnight — "at the stroke of the midnight hour"
+  const clockTex = canvasTexture(256,256,(c,w,h) => {
+    c.fillStyle='#f7f3e8'; c.beginPath(); c.arc(128,128,116,0,7); c.fill();
+    c.lineWidth=10; c.strokeStyle='#b08d3e'; c.stroke();
+    c.fillStyle='#222';
+    for (let i=0;i<12;i++){ const a=i*Math.PI/6;
+      c.save(); c.translate(128+92*Math.sin(a), 128-92*Math.cos(a));
+      c.beginPath(); c.arc(0,0,i%3===0?7:4,0,7); c.fill(); c.restore(); }
+    c.strokeStyle='#222'; c.lineCap='round';
+    c.lineWidth=10; c.beginPath(); c.moveTo(128,128); c.lineTo(128,58); c.stroke();  // hour → 12
+    c.lineWidth=6;  c.beginPath(); c.moveTo(128,128); c.lineTo(128,36); c.stroke();  // minute → 12
+    c.fillStyle='#b08d3e'; c.beginPath(); c.arc(128,128,8,0,7); c.fill();
+  });
+  const plinth = new THREE.Mesh(new THREE.BoxGeometry(1.1,2.2,.5), MAT.marble);
+  plinth.position.set(3.4,1.1,1.2); g.add(plinth);
+  const clock = new THREE.Mesh(new THREE.CircleGeometry(.55,24),
+    new THREE.MeshBasicMaterial({ map:clockTex, toneMapped:false }));
+  clock.position.set(3.4,2.0,1.46); g.add(clock);
+  return g;
+}
+
+/* ---- 1858 special: fading Mughal arch behind a rising Crown ---- */
+let crownFx = null;
+function buildCrownArch(accent){
+  const g = new THREE.Group();
+  const archMat = new THREE.MeshStandardMaterial({ color:'#c89b62', roughness:.9, transparent:true, opacity:.75 });
+  const shape = new THREE.Shape();
+  shape.moveTo(-1.5,0); shape.lineTo(-1.5,3.6); shape.lineTo(1.5,3.6); shape.lineTo(1.5,0); shape.closePath();
+  shape.holes.push(cuspedArchHole(1.0, 1.9, 1.0, 7));
+  const arch = new THREE.Mesh(new THREE.ExtrudeGeometry(shape,{depth:.25,bevelEnabled:false}), archMat);
+  arch.position.set(0,0,-1.3); g.add(arch);
+  const crown = makeCrown();
+  const cushion = new THREE.Mesh(new THREE.CylinderGeometry(.55,.6,.22,14),
+    new THREE.MeshStandardMaterial({ color:'#6E2138', roughness:.7 }));
+  cushion.position.y=-.26; crown.add(cushion);
+  crown.position.set(0, 1.1, .4);
+  g.add(crown);
+  crownFx = { archMat, crown, baseY: 1.1 };
+  return g;
+}
+
+/* ---- build every station by mapping over TIMELINE ---- */
+const stations = [];   // {st, s, pos, anchor, sideSign, frameGrp}
+function buildStations(){
+  TIMELINE.forEach((st, i) => {
+    const s = STATION_S[i];
+    const sideSign = st.side === 'left' ? 1 : -1;   // +side vector = visual left of travel
+    const P = pointAt(s, new THREE.Vector3());
+    const S = sideAt(s, new THREE.Vector3());
+    const T = tangentAt(s, new THREE.Vector3());
+    const grp = new THREE.Group();
+    if (st.prop === 'finale'){
+      // the tricolour stands at the centre of the plaza, dead ahead as the walk ends
+      const FP = pointAt(FLAG_S, new THREE.Vector3());
+      FLAG_POS.copy(FP);                          // orbit centre for the finale
+      grp.position.copy(FP);
+      grp.lookAt(P.x, 0.4, P.z);                    // face back toward the approaching walker
+    } else {
+      grp.position.copy(P).addScaledVector(S, sideSign * 4.6);
+      grp.lookAt(P.x, 0.4, P.z);                    // face the walkway
+    }
+    scene.add(grp);
+
+    // era-styled frame
+    let frame;
+    if (st.prop === 'finale')      frame = { grp: buildFinale(), anchorY: 5.2 };
+    else if (st.flashback)         frame = flashbackFrame(st);
+    else if (st.era === 'mughal' || st.era === 'transition') frame = mughalFrame(st);
+    else if (st.era === 'british') frame = britishFrame(st);
+    else                           frame = freedomFrame(st);
+    grp.add(frame.grp);
+
+    // symbolic prop beside the frame
+    if (st.prop === 'crownArch'){
+      const ca = buildCrownArch(st.accent);
+      ca.position.set(sideSign * -2.1, 0, .55);  // beside the frame — never before the picture
+      ca.rotation.y = sideSign * .4;
+      grp.add(ca);
+    }
+    else if (st.prop !== 'none' && st.prop !== 'finale' && PROPS[st.prop]){
+      const prop = PROPS[st.prop](st.accent);
+      prop.position.set(sideSign * -1.9, 0, .9);
+      prop.rotation.y = sideSign * .5;
+      grp.add(prop);
+    }
+
+    // floor-inlaid glowing year plate
+    const plate = yearPlate(st);
+    plate.position.copy(P).addScaledVector(S, sideSign * (WALK_W/2 - 1.35));
+    plate.position.y = .03;
+    plate.rotation.z = Math.atan2(T.x, T.z) + Math.PI;   // text top away from the walker → readable
+    scene.add(plate);
+
+    // finale card anchors near the year plate (the flag itself stays scenic, ahead)
+    const anchor = st.prop === 'finale'
+      ? P.clone().addScaledVector(S, sideSign * 3)
+      : grp.position.clone();
+    anchor.y = st.prop === 'finale' ? 3.2 : frame.anchorY;
+    // GALLERY PAUSE data: where the visitor stands and what they face
+    const viewPos = st.prop === 'finale' ? null
+      : P.clone().addScaledVector(S, sideSign * 1.3).setY(1.7);
+    // On mobile the card is a bottom sheet, so aim a little lower and the
+    // picture rides higher in frame, clear of it.
+    const lookPos = st.prop === 'finale' ? null
+      : grp.position.clone().setY(MOBILE ? 1.25 : 2.0);
+    stations.push({ st, i, s, pos: grp.position.clone(), anchor, sideSign, grp, viewPos, lookPos,
+                    artSlots: frame.art ? [frame.art] : [] });
+  });
+
+  // Taj Mahal centrepiece opposite Shah Jahan's station
+  const tajIdx = TIMELINE.findIndex(t => t.id === 'shahjahan-1628');
+  const tajS = STATION_S[tajIdx], tajSide = TIMELINE[tajIdx].side === 'left' ? -1 : 1; // opposite side
+  const taj = buildTaj();
+  const TP = pointAt(tajS + 4, new THREE.Vector3()), TS = sideAt(tajS + 4, new THREE.Vector3());
+  taj.position.copy(TP).addScaledVector(TS, tajSide * 12);
+  taj.lookAt(TP.x, 0, TP.z);
+  taj.scale.setScalar(1.8);
+  scene.add(taj);
+
+  // small EIC ship in the background near Jahangir (foreshadowing Thomas Roe, 1615)
+  const jIdx = TIMELINE.findIndex(t => t.id === 'jahangir-1605');
+  const ship = PROPS.ship(0.9);
+  const JP = pointAt(STATION_S[jIdx] + 6, new THREE.Vector3()), JS = sideAt(STATION_S[jIdx], new THREE.Vector3());
+  ship.position.copy(JP).addScaledVector(JS, (TIMELINE[jIdx].side==='left'?-1:1) * 11);
+  ship.rotation.y = 1.1;
+  scene.add(ship);
+}
+
+/* ========================= 5. PARTICLES ===========================
+   Dust motes (Mughal) · embers + smoke (1857) · light (finale)    */
+const particleSystems = [];
+function makeParticles({count, sRange, spread, yRange, size, color, blending, riser, opacity}){
+  const n = MOBILE ? Math.floor(count*0.5) : count;   // responsive particle budget
+  const posArr = new Float32Array(n*3), seed = new Float32Array(n), base = [];
+  for (let i=0;i<n;i++){
+    const s = sRange[0] + Math.random()*(sRange[1]-sRange[0]);
+    pointAt(s, _p); sideAt(s, _side);
+    const off = (Math.random()*2-1) * spread;
+    base.push(_p.x + _side.x*off, yRange[0] + Math.random()*(yRange[1]-yRange[0]), _p.z + _side.z*off);
+    posArr[i*3] = base[i*3]; posArr[i*3+1] = base[i*3+1]; posArr[i*3+2] = base[i*3+2];
+    seed[i] = Math.random()*100;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(posArr,3).setUsage(THREE.DynamicDrawUsage));
+  const dot = canvasTexture(32,32,(c) => { const g2 = c.createRadialGradient(16,16,0,16,16,16);
+    g2.addColorStop(0,'rgba(255,255,255,1)'); g2.addColorStop(1,'rgba(255,255,255,0)');
+    c.fillStyle=g2; c.fillRect(0,0,32,32); });
+  const mat = new THREE.PointsMaterial({ size, map:dot, color, transparent:true, opacity,
+    depthWrite:false, blending: blending||THREE.NormalBlending, sizeAttenuation:true });
+  const pts = new THREE.Points(geo, mat);
+  pts.frustumCulled = true;
+  scene.add(pts);
+  particleSystems.push({ pts, base, seed, riser, yRange, n });
+}
+function buildParticles(){
+  makeParticles({ count:480, sRange:[0, S_TRANS+2], spread:7, yRange:[.2,4.2], size:.06,
+    color:'#ffd9a0', opacity:.55, riser:0 });                                        // dust motes
+  makeParticles({ count:260, sRange:[S_REV-10, S_REV+16], spread:6, yRange:[0,5], size:.09,
+    color:'#ff5522', opacity:.9, blending:THREE.AdditiveBlending, riser:.9 });       // 1857 embers
+  makeParticles({ count:90,  sRange:[S_REV-10, S_REV+20], spread:8, yRange:[1,7], size:1.4,
+    color:'#1c1512', opacity:.28, riser:.35 });                                      // 1857 smoke
+  makeParticles({ count:240, sRange:[FLAG_S-55, FLAG_S+30], spread:13, yRange:[.3,6], size:.08,
+    color:'#fff4d8', opacity:.8, blending:THREE.AdditiveBlending, riser:.25 });      // finale light
+}
+function updateParticles(time){
+  for (const ps of particleSystems){
+    const arr = ps.pts.geometry.attributes.position.array;
+    for (let i=0;i<ps.n;i++){
+      const sd = ps.seed[i];
+      arr[i*3]   = ps.base[i*3]   + Math.sin(time*.4 + sd)*.35;
+      arr[i*3+2] = ps.base[i*3+2] + Math.cos(time*.3 + sd*1.3)*.35;
+      if (ps.riser > 0){
+        const range = ps.yRange[1]-ps.yRange[0];
+        arr[i*3+1] = ps.yRange[0] + ((ps.base[i*3+1]-ps.yRange[0]) + time*ps.riser + sd) % range;
+      } else {
+        arr[i*3+1] = ps.base[i*3+1] + Math.sin(time*.5 + sd*2.1)*.3;
+      }
+    }
+    ps.pts.geometry.attributes.position.needsUpdate = true;
+  }
+}
+
+/* ============================ 6. UI ===============================
+   Cards (nearest-3 DOM pool), progress bar, HUD, landing, audio.  */
+const state = {
+  target: 0, progress: 0,       // scroll → smoothed path progress (0..1)
+  started: false, intro: 1,
+  mouseX: 0, mouseY: 0,
+  time: 0,
+  // manual gallery focus: set by clicking a station card
+  focusIdx: -1,                 // station being faced (-1 = walking)
+  focusStn: null,               // kept while the view blends back out
+  focusT: 0, galleryG: 0,       // blend 0..1 and its eased value
+  finaleW: 0,                   // how deep into the plaza ending we are
+};
+const LERP = REDUCED ? 1 : 0.05;   // damping factor (reduced motion → instant)
+
+/* ---- card pool: only the nearest 3 stations exist in the DOM ---- */
+const cardsRoot = $('#cards');
+const CARD_POOL = MOBILE ? 1 : 3;
+const cardEls = [];
+for (let i=0;i<CARD_POOL;i++){
+  const el = document.createElement('article');
+  el.className = 'card'; el.tabIndex = 0; el.hidden = true;
+  el.dataset.idx = '-1';
+  el.addEventListener('click', () => focusStation(+el.dataset.idx));
+  el.addEventListener('keydown', e => { if (e.key==='Enter' || e.key===' '){ e.preventDefault(); focusStation(+el.dataset.idx); } });
+  cardsRoot.appendChild(el); cardEls.push(el);
+}
+function toggleCard(el){
+  el.classList.toggle('expanded');
+  const btn = el.querySelector('.more');
+  if (btn){ const ex = el.classList.contains('expanded');
+    btn.textContent = ex ? 'Show less ↑' : 'Read more ↓';
+    btn.setAttribute('aria-expanded', ex); }
+}
+function fillCard(el, stn){
+  const st = stn.st;
+  el.dataset.idx = stn.i;
+  el.classList.toggle('flashback', !!st.flashback);
+  el.classList.remove('expanded');
+  el.style.borderLeftColor = st.accent;
+  const rec = PHOTOS[st.id];
+  el.innerHTML = `
+    <img class="card-art" data-sid="${st.id}" src="${cardImage(st)}" alt="${rec ? esc(rec.title) : ''}">
+    <div class="card-credit">${rec ? esc(rec.credit) : ''}</div>
+    <div class="card-year" style="color:${st.accent}">${st.year}</div>
+    <h3>${st.title}</h3>
+    <p class="summary">${st.summary}</p>
+    <p class="details">${st.details}</p>
+    <button class="more" aria-expanded="false">Read more ↓</button>`;
+  el.setAttribute('aria-label', `${st.year} — ${st.title}`);
+  attachArtFallback(el);
+  el.querySelector('.more').addEventListener('click', e => { e.stopPropagation(); toggleCard(el); });
+}
+const _proj = new THREE.Vector3(), _view = new THREE.Vector3();
+function updateCards(sCam){
+  // pick nearest CARD_POOL stations by arc distance
+  const ranked = stations.map(stn => ({ stn, d: Math.abs(stn.s - sCam) }))
+                         .sort((a,b) => a.d - b.d).slice(0, CARD_POOL)
+                         .sort((a,b) => a.stn.i - b.stn.i);
+  // element assignment stays in index order (so cards aren't re-filled every
+  // frame), but collision priority runs nearest-first
+  const placed = [];                                   // screen rects already taken
+  ranked.forEach((r, k) => { r.el = cardEls[k]; });
+  [...ranked].sort((a, b) => a.d - b.d).forEach(r => {
+    const el = r.el;
+    if (+el.dataset.idx !== r.stn.i) fillCard(el, r.stn);
+    const worldD = camera.position.distanceTo(r.stn.anchor);
+    let show = state.started && worldD < 9 && r.stn.s > sCam - 10 && state.finaleW < .5;
+    _view.copy(r.stn.anchor).applyMatrix4(camera.matrixWorldInverse);
+    if (_view.z > -1) show = false;                    // behind (or beside) the camera
+    _proj.copy(r.stn.anchor).project(camera);
+    // Standing before the picture, the card becomes a wall label:
+    // the thumbnail drops away (the real artwork is right there) and
+    // the text slides to the side of the frame.
+    const asLabel = r.stn.i === state.focusIdx && state.galleryG > .25;
+    el.classList.toggle('label-mode', asLabel);
+
+    if (!MOBILE){
+      let x = ( _proj.x*0.5+0.5) * innerWidth;
+      let y = (-_proj.y*0.5+0.5) * innerHeight;
+      const hw = (el.offsetWidth || 300) / 2, hh = el.offsetHeight || 200;
+      if (asLabel){
+        const gg = THREE.MathUtils.clamp((state.galleryG - .25) / .5, 0, 1);
+        x += (r.stn.sideSign > 0 ? 1 : -1) * (hw + 150) * gg;   // step aside from the artwork
+        y += (hh * .45) * gg;                                    // and down to label height
+      }
+      x = THREE.MathUtils.clamp(x, hw + 12, innerWidth - hw - 12);
+      y = THREE.MathUtils.clamp(y, hh + 62, innerHeight - 90);     // stay clear of HUD & progress bar
+      // two cards must never stack: the nearer station keeps its spot
+      if (show){
+        const box = { l:x-hw, r:x+hw, t:y-hh, b:y };
+        if (placed.some(p => box.l < p.r && box.r > p.l && box.t < p.b && box.b > p.t)) show = false;
+        else placed.push(box);
+      }
+      const lift = show ? 0 : 14;
+      el.style.transform = `translate(-50%,-100%) translate(${x.toFixed(1)}px,${(y-18+lift).toFixed(1)}px)`;
+    }
+    el.hidden = false;
+    el.style.opacity = show ? String(THREE.MathUtils.clamp((9 - worldD) / 3, 0, 1)) : '0';
+    el.style.pointerEvents = show ? 'auto' : 'none';
+    if (!show && el.classList.contains('expanded')) el.classList.remove('expanded');
+  });
+}
+
+/* ---- progress bar with clickable year markers ---- */
+const progressFill = $('#progress .fill'), progressThumb = $('#progress .thumb');
+function buildProgressBar(){
+  const track = $('#progress .track');
+  MARKER_YEARS.forEach(y => {
+    const idx = TIMELINE.findIndex(t => t.year === y || t.year.startsWith(y));
+    if (idx < 0) return;
+    const p = STATION_S[idx] / SPAN;
+    const b = document.createElement('button');
+    b.className = 'marker'; b.style.left = (p*100)+'%';
+    b.innerHTML = `<span>${y}</span>`;
+    b.setAttribute('aria-label', `Jump to ${y} — ${TIMELINE[idx].title}`);
+    b.addEventListener('click', () => scrollToS(STATION_S[idx]));
+    track.appendChild(b);
+  });
+}
+let scrollMax = 1;
+function scrollToS(s){
+  setTour(false);                       // any jump means the visitor took over
+  // instant scroll jump — the camera's lerp damping turns it into a smooth glide
+  // (native behavior:'smooth' is unreliable across embedded browsers)
+  window.scrollTo({ top: (s / SPAN) * scrollMax, behavior: 'auto' });
+  // set the target directly rather than waiting for the scroll event —
+  // the focus-exit check reads it on the very next frame
+  state.target = THREE.MathUtils.clamp(s / SPAN, 0, 1);
+}
+
+/* ---- HUD: zone label + year readout ---- */
+const zoneLabel = $('#zone-label'), yearReadout = $('#year-readout');
+let currentZone = -1;
+function updateHUD(sCam){
+  const zi = ZONES.findIndex(z => sCam >= z.s0 && sCam < z.s1);
+  if (zi !== currentZone && zi >= 0){
+    currentZone = zi;
+    if (window.gsap){
+      gsap.fromTo(zoneLabel, {opacity:0, y:-6}, {opacity:.9, y:0, duration:.8});
+    }
+    zoneLabel.textContent = ZONES[zi].name;
+  }
+  let nearest = 0, best = 1e9;
+  for (const stn of stations){ const d = Math.abs(stn.s - sCam); if (d < best){ best = d; nearest = stn.i; } }
+  yearReadout.textContent = TIMELINE[nearest].year;
+  if (state.started) rememberPlace(nearest, sCam);   // deep link + resume point
+  const p = THREE.MathUtils.clamp(sCam / SPAN, 0, 1);
+  progressFill.style.width = (p*100)+'%';
+  progressThumb.style.left = (p*100)+'%';
+}
+
+/* ---- ambient audio: Web Audio synthesis, OFF by default -----------
+   Sitar-like drone (Mughal) · train rumble & clack (British) ·
+   soft chord (finale). Crossfaded by walkway position.            */
+const ambience = {
+  ctx: null, buses: null, on: false,
+  start(){
+    const A = new (window.AudioContext || window.webkitAudioContext)();
+    const master = A.createGain(); master.gain.value = .5; master.connect(A.destination);
+    const mkBus = () => { const g = A.createGain(); g.gain.value = 0; g.connect(master); return g; };
+    const buses = { m: mkBus(), b: mkBus(), f: mkBus() };
+    // — Mughal: tanpura-ish drone —
+    [[110,'sawtooth',.05],[110.7,'sawtooth',.04],[165,'sine',.05],[220,'sine',.025]].forEach(([f,t,v]) => {
+      const o = A.createOscillator(); o.type = t; o.frequency.value = f;
+      const bp = A.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 400; bp.Q.value = 5;
+      const lfo = A.createOscillator(); lfo.frequency.value = .07;
+      const lfoG = A.createGain(); lfoG.gain.value = 220;
+      lfo.connect(lfoG); lfoG.connect(bp.frequency);
+      const g = A.createGain(); g.gain.value = v;
+      o.connect(bp); bp.connect(g); g.connect(buses.m); o.start(); lfo.start();
+    });
+    // — British: filtered noise "distant train" with rhythmic chug —
+    const nb = A.createBuffer(1, A.sampleRate*2, A.sampleRate);
+    const nd = nb.getChannelData(0); let last = 0;
+    for (let i=0;i<nd.length;i++){ const w = Math.random()*2-1; nd[i] = (last + .02*w)/1.02; last = nd[i]; nd[i]*=3.5; }
+    const noise = A.createBufferSource(); noise.buffer = nb; noise.loop = true;
+    const lp = A.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 320;
+    const chug = A.createGain(); chug.gain.value = .35;
+    const chugLfo = A.createOscillator(); chugLfo.type = 'square'; chugLfo.frequency.value = 2.4;
+    const chugDepth = A.createGain(); chugDepth.gain.value = .16;
+    chugLfo.connect(chugDepth); chugDepth.connect(chug.gain);
+    noise.connect(lp); lp.connect(chug); chug.connect(buses.b); noise.start(); chugLfo.start();
+    // — finale: soft major chord with slow shimmer —
+    [261.6, 329.6, 392.0].forEach((f,i) => {
+      const o = A.createOscillator(); o.type='sine'; o.frequency.value = f;
+      const g = A.createGain(); g.gain.value = .035;
+      const trem = A.createOscillator(); trem.frequency.value = .12 + i*.05;
+      const tg = A.createGain(); tg.gain.value = .014;
+      trem.connect(tg); tg.connect(g.gain);
+      o.connect(g); g.connect(buses.f); o.start(); trem.start();
+    });
+    this.ctx = A; this.buses = buses;
+  },
+  setWeights(s){
+    if (!this.ctx || !this.on) return;
+    const t = this.ctx.currentTime;
+    const sm = (a,b) => smooth(THREE.MathUtils.clamp((s-a)/(b-a),0,1));
+    const wM = 1 - sm(MUGHAL_END + 4, MUGHAL_END + 42);
+    const wB = sm(S_BRIT - 8, S_BRIT + 8) * (1 - sm(S_CROWNST + 6, S_CROWNST + 42));
+    const wF = sm(FLAG_S - 60, FLAG_S - 20);
+    this.buses.m.gain.setTargetAtTime(wM, t, .4);
+    this.buses.b.gain.setTargetAtTime(wB, t, .4);
+    this.buses.f.gain.setTargetAtTime(wF, t, .4);
+  },
+  toggle(){
+    if (!this.ctx) this.start();
+    this.on = !this.on;
+    if (this.on) this.ctx.resume(); else this.ctx.suspend();
+    const b = $('#audio-toggle');
+    b.setAttribute('aria-pressed', this.on);
+    b.textContent = this.on ? '🔊 Ambience' : '🔇 Ambience';
+    return this.on;
+  }
+};
+$('#audio-toggle').addEventListener('click', () => ambience.toggle());
+
+/* ==================== GALLERY FOCUS (manual) ======================
+   Clicking a card walks the visitor up to that station's picture and
+   turns the camera to face it. Clicking again, scrolling on, or Esc
+   returns to the path. The finale (no framed picture) is exempt.   */
+function focusStation(idx){
+  const stn = stations[idx];
+  if (!stn || !stn.viewPos) return;
+  if (state.focusIdx === idx){ state.focusIdx = -1; return; }
+  state.focusIdx = idx; state.focusStn = stn;
+  scrollToS(stn.s);                              // step up to the artwork
+}
+
+/* ==================== PICTURE LIGHTBOX ============================
+   "View picture" on a focused card opens the full photograph with
+   its title and attribution. Click anywhere or Esc to close.      */
+const lightboxEl = document.createElement('div');
+lightboxEl.id = 'lightbox'; lightboxEl.hidden = true;
+lightboxEl.setAttribute('role', 'dialog'); lightboxEl.setAttribute('aria-label', 'Picture view');
+lightboxEl.innerHTML = `
+  <figure><img alt=""><figcaption><strong></strong><span></span></figcaption></figure>
+  <button id="lb-close" aria-label="Close picture">✕</button>`;
+document.body.appendChild(lightboxEl);
+function openLightbox(st){
+  const rec = PHOTOS[st.id];
+  const img = lightboxEl.querySelector('img');
+  img.src = cardImage(st); img.alt = rec ? rec.title : st.title;
+  lightboxEl.querySelector('strong').textContent = `${st.year} — ${st.title}`;
+  lightboxEl.querySelector('span').textContent =
+    rec ? `${rec.title} · ${rec.credit}` : 'Commemorative illustration';
+  lightboxEl.hidden = false;
+}
+function closeLightbox(){ lightboxEl.hidden = true; }
+lightboxEl.addEventListener('click', closeLightbox);
+
+/* Clicking a framed picture in the 3D scene: from the path it steps
+   up to it; standing before it, a second click opens the lightbox. */
+const _ray = new THREE.Raycaster(), _ndc = new THREE.Vector2();
+function pickArt(ev){
+  _ndc.set((ev.clientX / innerWidth) * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1);
+  _ray.setFromCamera(_ndc, camera);
+  const hits = _ray.intersectObjects(ART_PICKS.map(p => p.mesh), false);
+  if (!hits.length || hits[0].distance > 30) return null;
+  return ART_PICKS.find(p => p.mesh === hits[0].object);
+}
+canvas.addEventListener('click', ev => {
+  if (!state.started || !lightboxEl.hidden) return;
+  const hit = pickArt(ev); if (!hit) return;
+  const idx = TIMELINE.indexOf(hit.st);
+  if (state.focusIdx === idx) openLightbox(hit.st);
+  else focusStation(idx);
+});
+canvas.addEventListener('pointermove', ev => {
+  if (!state.started){ canvas.style.cursor = ''; return; }
+  canvas.style.cursor = pickArt(ev) ? 'pointer' : '';
+}, { passive: true });
+
+/* ==================== GUIDED TOUR =================================
+   A museum stroll: steady pace, pausing a moment at each station.
+   Any scroll, key, or jump hands control back to the visitor.     */
+const tour = { on:false, dwellUntil:0, lastDwell:-1, releaseAt:0 };
+const tourBtn = document.createElement('button');
+tourBtn.id = 'tour-toggle'; tourBtn.setAttribute('aria-pressed', 'false');
+tourBtn.textContent = '▶ Tour'; tourBtn.title = 'Guided walk through all 45 stations';
+document.body.appendChild(tourBtn);
+function setTour(on){
+  if (tour.on === on) return;
+  tour.on = on; tour.lastDwell = -1; tour.dwellUntil = 0; tour.releaseAt = 0;
+  tourBtn.setAttribute('aria-pressed', on);
+  tourBtn.textContent = on ? '❚❚ Tour' : '▶ Tour';
+}
+tourBtn.addEventListener('click', () => setTour(!tour.on));
+addEventListener('wheel',     () => setTour(false), { passive:true });
+addEventListener('touchmove', () => setTour(false), { passive:true });
+
+/* ==================== FINALE MONTAGE ==============================
+   While the camera circles the flag, glimpses of the whole journey
+   drift past — every station, oldest to newest, on a loop.        */
+const montage = { el:null, imgs:null, list:[], idx:-1, active:false };
+function buildMontage(){
+  montage.list = TIMELINE.filter(t => t.prop !== 'finale');
+  const el = document.createElement('div');
+  el.id = 'montage'; el.hidden = true; el.setAttribute('aria-hidden', 'true');
+  el.innerHTML = `
+    <div class="m-head">1526 – 1947 · glimpses of the journey</div>
+    <div class="m-stage"><img class="m-a" alt=""><img class="m-b" alt=""></div>
+    <div class="m-cap"><b></b><span></span></div>`;
+  document.body.appendChild(el);
+  montage.el = el; montage.imgs = [el.querySelector('.m-a'), el.querySelector('.m-b')];
+}
+function updateMontage(now, active){
+  const m = montage; if (!m.el) return;
+  if (active !== m.active){ m.active = active; m.el.hidden = !active; if (active) m.idx = -1; }
+  if (!active) return;
+  const i = Math.floor(now / 2.6) % m.list.length;
+  if (i === m.idx) return;
+  m.idx = i;
+  const st = m.list[i];
+  const front = m.imgs[i % 2], back = m.imgs[(i + 1) % 2];
+  front.src = cardImage(st); front.classList.add('on'); back.classList.remove('on');
+  m.el.querySelector('b').textContent = st.year;
+  m.el.querySelector('span').textContent = st.title;
+}
+
+/* ==================== STATION STEPPING ============================ */
+function stepStation(dir){
+  const sCam = state.progress * SPAN;
+  let target;
+  if (dir > 0) target = STATION_S.find(s => s > sCam + 1.5);
+  else for (let i = STATION_S.length - 1; i >= 0; i--)
+    if (STATION_S[i] < sCam - 1.5){ target = STATION_S[i]; break; }
+  if (target !== undefined) scrollToS(target);
+}
+$('#prev-stn').addEventListener('click', () => stepStation(-1));
+$('#next-stn').addEventListener('click', () => stepStation(1));
+
+/* ==================== STATION INDEX (floor plan) ================== */
+function buildIndex(){
+  const btn = document.createElement('button');
+  btn.id = 'index-btn'; btn.textContent = '☰ Index';
+  btn.setAttribute('aria-expanded', 'false');
+  document.body.appendChild(btn);
+  const panel = document.createElement('nav');
+  panel.id = 'index'; panel.setAttribute('aria-label', 'Station index');
+  let h = `<button class="idx-close" aria-label="Close index">✕ Close</button>
+           <h2>Walk Through Time — Index</h2>`;
+  ZONES.forEach((z, zi) => {
+    h += `<div class="zone-h">${z.name}</div>`;
+    TIMELINE.forEach((st, i) => { if (st.zone !== zi) return;
+      h += `<button class="stn" data-i="${i}">
+        <span class="dot" style="background:${st.accent}"></span>
+        <span class="yr">${st.year}</span><span>${esc(st.title)}</span></button>`;
+    });
+  });
+  panel.innerHTML = h;
+  document.body.appendChild(panel);
+  const setOpen = o => { panel.classList.toggle('open', o); btn.setAttribute('aria-expanded', o);
+    btn.textContent = o ? '✕ Close' : '☰ Index'; };     // the button stays above the panel
+  btn.addEventListener('click', () => setOpen(!panel.classList.contains('open')));
+  panel.addEventListener('click', e => {
+    if (e.target.closest('.idx-close')) return setOpen(false);
+    const b = e.target.closest('.stn'); if (!b) return;
+    scrollToS(STATION_S[+b.dataset.i]); setOpen(false);
+  });
+  document.addEventListener('click', e => {              // clicking outside closes
+    if (!panel.classList.contains('open')) return;
+    if (panel.contains(e.target) || btn.contains(e.target)) return;
+    setOpen(false);
+  });
+  addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
+}
+
+/* ==================== DEEP LINKS & RESUME ========================= */
+function stationFromHash(){
+  const id = decodeURIComponent(location.hash.slice(1));
+  return TIMELINE.findIndex(t => t.id === id);
+}
+let lastHashIdx = -1;
+function rememberPlace(nearest, sCam){          // called as stations pass
+  if (nearest === lastHashIdx) return;
+  lastHashIdx = nearest;
+  try { history.replaceState(null, '', '#' + TIMELINE[nearest].id); } catch {}
+  try { localStorage.setItem('walkPos', String(Math.round(sCam))); } catch {}
+}
+// a hash edited while the page is open also walks there
+// (replaceState above never fires hashchange, so no feedback loop)
+addEventListener('hashchange', () => {
+  const i = stationFromHash();
+  if (i >= 0 && state.started && i !== lastHashIdx) scrollToS(STATION_S[i]);
+});
+
+/* ================== 7. ACCESSIBILITY (part 2) =====================
+   Keyboard walking + reduced-motion handled via LERP above.       */
+addEventListener('keydown', e => {
+  if (!state.started) return;
+  if ($('#text-timeline').classList.contains('open')) return;
+  if (e.key === 'Escape'){
+    if (!lightboxEl.hidden) closeLightbox();
+    else state.focusIdx = -1;                    // step back from the picture
+    setTour(false);
+    return;
+  }
+  if (!lightboxEl.hidden) return;                // stand still while it's open
+  if (e.key === 'n' || e.key === 'N'){ stepStation(1);  return; }
+  if (e.key === 'p' || e.key === 'P'){ stepStation(-1); return; }
+  setTour(false);                                // walk keys hand back control
+  const stepSm = 160, stepLg = innerHeight * .85;
+  let dy = 0;
+  switch (e.key){
+    case 'ArrowDown': case 'ArrowRight': case 's': dy = stepSm; break;
+    case 'ArrowUp':   case 'ArrowLeft':  case 'w': dy = -stepSm; break;
+    case 'PageDown': dy = stepLg; break;
+    case 'PageUp':   dy = -stepLg; break;
+    default: return;
+  }
+  e.preventDefault();
+  window.scrollBy({ top: dy, behavior: 'auto' });   // camera damping smooths the step
+});
+
+/* mouse / touch look-around parallax (±3°) */
+addEventListener('pointermove', e => {
+  state.mouseX = (e.clientX / innerWidth) * 2 - 1;
+  state.mouseY = (e.clientY / innerHeight) * 2 - 1;
+}, { passive:true });
+
+/* ====================== SCROLL → PROGRESS =========================
+   GSAP ScrollTrigger maps document scroll to path progress; the
+   render loop lerps toward it for weighted, damped movement.      */
+function setupScroll(){
+  const spacer = $('#scroll-space');
+  spacer.style.height = Math.round(SPAN * 30 + innerHeight) + 'px';
+  scrollMax = spacer.offsetHeight - innerHeight;
+  history.scrollRestoration = 'manual';
+  scrollTo(0, 0);
+  if (window.gsap && window.ScrollTrigger){
+    gsap.registerPlugin(ScrollTrigger);
+    ScrollTrigger.create({
+      start: 0, end: () => scrollMax,
+      onUpdate: self => { state.target = self.progress; }
+    });
+    ScrollTrigger.refresh();
+  } else {
+    addEventListener('scroll', () => { state.target = scrollY / scrollMax; }, { passive:true });
+  }
+  addEventListener('resize', () => {
+    camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+    scrollMax = spacer.offsetHeight - innerHeight;
+  });
+}
+
+/* ========================= RENDER LOOP ============================ */
+const _look = new THREE.Vector3(), _camP = new THREE.Vector3(), _aerial = new THREE.Vector3(),
+      _orbit = new THREE.Vector3(), _flagLook = new THREE.Vector3();
+const FLAG_POS = new THREE.Vector3();
+let lastS = 0, walkPhase = 0;
+const clock = new THREE.Clock();
+function tick(){
+  requestAnimationFrame(tick);
+  const dt = Math.min(clock.getDelta(), .1);
+  state.time += dt;
+
+  // damped scroll smoothing (weighted walk feel)
+  const k = REDUCED ? 1 : 1 - Math.pow(1 - LERP, dt*60);
+  state.progress += (state.target - state.progress) * k;
+  const sCam = state.progress * SPAN;
+  const speed = Math.abs(sCam - lastS) / Math.max(dt, 1e-4); lastS = sCam;
+
+  // GUIDED TOUR — steady stroll; at each station it steps up to the
+  // picture (the gallery view), lingers, then eases back and walks on.
+  // Dwell keys off the scroll position (not the smoothed camera), so a
+  // tour started mid-glide doesn't trip a dwell at every passing station.
+  if (tour.on && state.started){
+    if (tour.releaseAt && state.time >= tour.releaseAt){
+      state.focusIdx = -1; tour.releaseAt = 0;   // let go of the picture
+    }
+    if (state.time >= tour.dwellUntil){
+      window.scrollBy(0, (scrollMax / SPAN) * 3.4 * dt);
+      const sT = state.target * SPAN;
+      for (const stn of stations){
+        if (tour.lastDwell !== stn.i && Math.abs(stn.s - sT) < .8){
+          tour.lastDwell = stn.i;
+          if (stn.viewPos){                      // face the picture while paused
+            tour.dwellUntil = state.time + 5.4;
+            tour.releaseAt  = state.time + 3.6;
+            state.focusIdx = stn.i; state.focusStn = stn;
+          } else tour.dwellUntil = state.time + 2.2;
+          break;
+        }
+      }
+    }
+    if (state.target > .998) setTour(false);     // journey's end at the flag
+  }
+
+  // how deep into the plaza ending we are (0..1)
+  state.finaleW = smooth(THREE.MathUtils.clamp((sCam - (SPAN - 6)) / 5.2, 0, 1));
+
+  // CAMERA PATH — position, look-ahead, head-bob, parallax
+  pointAt(sCam, _camP);
+
+  // GALLERY FOCUS — manual only: clicking a station card steps up to
+  // its picture. Scrolling on, clicking again, or Esc releases it.
+  if (state.focusIdx >= 0 && Math.abs(state.target * SPAN - stations[state.focusIdx].s) > 5){
+    state.focusIdx = -1;                             // the visitor walked on
+  }
+  // constant-rate blend + smoothstep easing = a gentle glide in AND out
+  const gGoal = state.focusIdx >= 0 ? 1 : 0;
+  if (REDUCED) state.focusT = gGoal;
+  else if (state.focusT < gGoal) state.focusT = Math.min(gGoal, state.focusT + dt / 1.7);
+  else if (state.focusT > gGoal) state.focusT = Math.max(gGoal, state.focusT - dt / 1.7);
+  const g = smooth(state.focusT);
+  state.galleryG = g;
+
+  const bobAmp = REDUCED ? 0
+    : 0.02 * THREE.MathUtils.clamp(speed/4, 0, 1) * (1 - g*.85) * (1 - state.finaleW);
+  walkPhase += dt * (2.2 + speed*.35);
+  _camP.y = 1.7 + Math.sin(walkPhase)*bobAmp;
+
+  pointAt(Math.min(sCam + 7, PATHLEN-0.1), _look);
+  const endLift = smooth(THREE.MathUtils.clamp((sCam - (SPAN - 25)) / 20, 0, 1)); // gaze rises to the flag
+  _look.y = 1.55 + endLift * 2.8;
+
+  if (g > 0 && state.focusStn && state.focusStn.viewPos){
+    _camP.lerp(state.focusStn.viewPos, g * 0.9);   // step up to the picture
+    _look.lerp(state.focusStn.lookPos, g);         // and face it
+  }
+
+  // FINALE ORBIT — at the plaza the camera leaves the path and circles
+  // the tricolour while glimpses of the whole journey play.
+  if (state.finaleW > 0){
+    const th = REDUCED ? 2.35 : state.time * .21;  // one turn ≈ 30 s (fixed vantage if reduced)
+    _orbit.set(FLAG_POS.x + Math.cos(th) * 11.5,
+               2.7 + (REDUCED ? 0 : Math.sin(state.time * .4) * .18),
+               FLAG_POS.z + Math.sin(th) * 11.5);
+    _camP.lerp(_orbit, state.finaleW);
+    _flagLook.set(FLAG_POS.x, 4.4, FLAG_POS.z);
+    _look.lerp(_flagLook, state.finaleW);
+  }
+
+  // intro aerial glide blend
+  if (state.intro > 0){
+    pointAt(2, _aerial); _aerial.y = 7.5; _aerial.x += 4;
+    _camP.lerp(_aerial, smooth(state.intro));
+    _look.y += state.intro * 1.2;
+  }
+  camera.position.copy(_camP);
+  camera.lookAt(_look);
+  if (!REDUCED){
+    camera.rotation.y -= state.mouseX * THREE.MathUtils.degToRad(3);
+    camera.rotation.x -= state.mouseY * THREE.MathUtils.degToRad(2);
+  }
+
+  // ERA TRANSITIONS — environment follows the walker
+  applyEnv(sCam);
+  // quiet stations (Jallianwala, the famines, the martyrs) hush the
+  // light and draw the fog in — restrained, no effects
+  let hush = 0;
+  for (const stn of stations) if (stn.st.quiet){
+    hush = Math.max(hush, smooth(Math.max(0, 1 - Math.abs(stn.s - sCam)/11)));
+  }
+  if (hush > 0){
+    sun.intensity  *= 1 - 0.55*hush;
+    hemi.intensity *= 1 - 0.35*hush;
+    scene.fog.far   = THREE.MathUtils.lerp(scene.fog.far, 54, hush*.8);
+  }
+  sky.position.copy(camera.position);
+  sun.position.set(_camP.x + 18, 32, _camP.z + 12);
+  sun.target.position.set(_camP.x, 0, _camP.z - 8);
+
+  // pooled accent lights on the 3 nearest stations
+  const near = stations.map(stn => ({ stn, d: Math.abs(stn.s - sCam) }))
+                       .sort((a,b) => a.d - b.d).slice(0, pool.length);
+  near.forEach((r, i) => {
+    const L = pool[i];
+    L.position.copy(r.stn.anchor); L.position.y = 2.6;
+    L.color.set(r.stn.st.accent);
+    L.intensity = THREE.MathUtils.clamp(1 - r.d/20, 0, 1) * (r.stn.st.quiet ? .8 : 2.4);
+  });
+
+  // 1858 set piece: arch fades, Crown rises, as the walker approaches
+  if (crownFx){
+    const d = Math.abs(S_CROWNST - sCam);
+    const f = smooth(THREE.MathUtils.clamp(1 - d/16, 0, 1));
+    crownFx.archMat.opacity = .8 - f*.65;
+    crownFx.crown.position.y = crownFx.baseY + f*1.3;
+    crownFx.crown.rotation.y += dt*.25;
+  }
+  if (flagUniforms) flagUniforms.uTime.value = state.time;
+
+  // lazily fetch the pictures for stations coming up; ensureArt is a
+  // one-line early-return once a station is handled, so this is cheap
+  for (const stn of stations){
+    const d = stn.s - sCam;
+    if (d > -20 && d < 55) ensureArt(stn);
+    else if (d < -70 || d > 110) releaseArt(stn);   // hysteresis avoids thrash
+  }
+
+  updateParticles(state.time);
+  updateCards(sCam);
+  updateHUD(sCam);
+  updateMontage(state.time, state.started && state.finaleW > .55);
+  ambience.setWeights(sCam);
+
+  renderer.render(scene, camera);
+}
+
+/* ============================ BUILD =============================== */
+document.body.style.overflow = 'hidden';                 // locked until Start
+setLoad(18, 'Laying the path…');       await nextFrame(); buildFloor();
+setLoad(38, 'Raising the arches…');    await nextFrame(); buildArchitecture();
+setLoad(62, 'Placing the stations…');  await nextFrame(); buildStations();
+setLoad(80, 'Kindling the eras…');     await nextFrame(); buildParticles(); buildProgressBar(); setupScroll(); buildIndex(); buildMontage();
+setLoad(92, 'Hanging the pictures…');  await nextFrame();
+stations.slice(0, 4).forEach(ensureArt);   // opening frames ready before the walk starts
+setLoad(100, 'Ready.');
+renderer.render(scene, camera);                           // warm first frame
+tick();
+
+// dev hook: lets tests drive the walk without scrolling (harmless in production)
+window.__walk = { state, SPAN, stations, PHOTOS, camera, goto: s => { state.target = s / SPAN; } };
+
+const startBtn = $('#start-btn');
+function beginWalk(atS){
+  state.started = true;
+  document.body.style.overflow = '';
+  $('#landing').classList.add('hidden');
+  $('#hud').removeAttribute('aria-hidden');
+  if (atS != null){
+    state.intro = 0;
+    scrollToS(atS);
+    state.progress = state.target = atS / SPAN;   // arrive in place, no fly-through
+  } else if (REDUCED || !window.gsap){ state.intro = 0; }
+  else gsap.to(state, { intro: 0, duration: 2.6, ease: 'power2.inOut' });
+}
+startBtn.disabled = false;
+// deep link (#station-id) wins; otherwise offer to resume the last visit
+const hashIdx = stationFromHash();
+if (hashIdx >= 0){
+  startBtn.textContent = `Begin at ${TIMELINE[hashIdx].year} — ${TIMELINE[hashIdx].title}`;
+} else {
+  let savedS = null;
+  try { const v = parseFloat(localStorage.getItem('walkPos'));
+        if (v > 40 && v < SPAN - 12) savedS = v; } catch {}
+  if (savedS != null){
+    let near = 0, best = 1e9;
+    STATION_S.forEach((s, i) => { const d = Math.abs(s - savedS); if (d < best){ best = d; near = i; } });
+    const rb = $('#resume-btn');
+    rb.hidden = false;
+    rb.textContent = `↩ Resume at ${TIMELINE[near].year} · ${TIMELINE[near].title}`;
+    rb.addEventListener('click', () => beginWalk(savedS));
+  }
+}
+startBtn.addEventListener('click', () => beginWalk(hashIdx >= 0 ? STATION_S[hashIdx] : null));
+</script>
+</body>
+</html>
