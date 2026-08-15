@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useStore } from '../store.js';
 import { TIMELINE } from '../data/timeline.js';
+import { WALK } from '../data/walk.js';
 import { cardImage } from '../art/vignettes.js';
 
 /* Glimpses of the whole journey while the camera circles the flag.
@@ -19,7 +20,7 @@ export default function Montage(){
 
   return (
     <div id="montage" aria-hidden="true">
-      <div className="m-head">1526 – 1947 · glimpses of the journey</div>
+      <div className="m-head">{WALK.range} · glimpses of the journey</div>
       <div className="m-stage">
         <img className={`m-a${curIsA ? ' on' : ''}`} src={cardImage(a)} alt="" />
         <img className={`m-b${curIsA ? '' : ' on'}`} src={cardImage(b)} alt="" />

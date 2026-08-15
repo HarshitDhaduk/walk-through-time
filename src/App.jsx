@@ -13,6 +13,7 @@ import Montage from './components/Montage.jsx';
 import ExploreCaption from './components/ExploreCaption.jsx';
 import TextTimeline from './components/TextTimeline.jsx';
 import Ledger from './components/Ledger.jsx';
+import Bhakt from './components/Bhakt.jsx';
 
 export default function App(){
   const canvasRef = useRef(null);
@@ -37,6 +38,7 @@ export default function App(){
       <Landing />
       <TextTimeline />
       <Ledger />
+      <Bhakt />
       <div id="scroll-space" ref={el => { uiRefs.spacer = el; }} />
     </>
   );

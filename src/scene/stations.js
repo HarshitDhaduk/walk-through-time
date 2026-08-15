@@ -1822,38 +1822,48 @@ function buildStations(){
                     artSlots: frame.art ? [frame.art] : [] });
   });
 
+  // The monuments below are keyed to stations of the Record (1526–1947);
+  // in the documented corridor those ids are absent and each is skipped.
+  const idxOf = id => TIMELINE.findIndex(t => t.id === id);
+
   // Taj Mahal centrepiece opposite Shah Jahan's station
-  const tajIdx = TIMELINE.findIndex(t => t.id === 'shahjahan-1628');
-  const tajS = STATION_S[tajIdx], tajSide = TIMELINE[tajIdx].side === 'left' ? -1 : 1; // opposite side
-  const taj = buildTaj();
-  const TP = pointAt(tajS + 4, new THREE.Vector3()), TS = sideAt(tajS + 4, new THREE.Vector3());
-  taj.position.copy(TP).addScaledVector(TS, tajSide * 12);
-  taj.lookAt(TP.x, 0, TP.z);
-  taj.scale.setScalar(1.8);
-  scene.add(taj);
-  EXPLORABLES.push({ root: taj, name: 'The Taj Mahal',
-    blurb: 'Built 1632–1653 for Mumtaz Mahal by some twenty thousand artisans — the marble height of the empire.' });
+  const tajIdx = idxOf('shahjahan-1628');
+  if (tajIdx >= 0){
+    const tajS = STATION_S[tajIdx], tajSide = TIMELINE[tajIdx].side === 'left' ? -1 : 1; // opposite side
+    const taj = buildTaj();
+    const TP = pointAt(tajS + 4, new THREE.Vector3()), TS = sideAt(tajS + 4, new THREE.Vector3());
+    taj.position.copy(TP).addScaledVector(TS, tajSide * 12);
+    taj.lookAt(TP.x, 0, TP.z);
+    taj.scale.setScalar(1.8);
+    scene.add(taj);
+    EXPLORABLES.push({ root: taj, name: 'The Taj Mahal',
+      blurb: 'Built 1632–1653 for Mumtaz Mahal by some twenty thousand artisans — the marble height of the empire.' });
+  }
 
   // small EIC ship in the background near Jahangir (foreshadowing Thomas Roe, 1615)
-  const jIdx = TIMELINE.findIndex(t => t.id === 'jahangir-1605');
-  const ship = PROPS.ship(0.9);
-  const JP = pointAt(STATION_S[jIdx] + 6, new THREE.Vector3()), JS = sideAt(STATION_S[jIdx], new THREE.Vector3());
-  ship.position.copy(JP).addScaledVector(JS, (TIMELINE[jIdx].side==='left'?-1:1) * 11);
-  ship.rotation.y = 1.1;
-  scene.add(ship);
-  EXPLORABLES.push({ root: ship, name: 'An English Ship on the Horizon',
-    blurb: 'Sir Thomas Roe reached Jahangir’s court in 1615 asking leave to trade — the empire barely noticed.' });
+  const jIdx = idxOf('jahangir-1605');
+  if (jIdx >= 0){
+    const ship = PROPS.ship(0.9);
+    const JP = pointAt(STATION_S[jIdx] + 6, new THREE.Vector3()), JS = sideAt(STATION_S[jIdx], new THREE.Vector3());
+    ship.position.copy(JP).addScaledVector(JS, (TIMELINE[jIdx].side==='left'?-1:1) * 11);
+    ship.rotation.y = 1.1;
+    scene.add(ship);
+    EXPLORABLES.push({ root: ship, name: 'An English Ship on the Horizon',
+      blurb: 'Sir Thomas Roe reached Jahangir’s court in 1615 asking leave to trade — the empire barely noticed.' });
+  }
 
   // Rani Lakshmibai statue guarding the approach to 1857
-  const rIdx = TIMELINE.findIndex(t => t.id === 'revolt-1857');
-  const statue = buildJhansiStatue();
-  const RP = pointAt(STATION_S[rIdx] - 3, new THREE.Vector3());
-  const RSd = sideAt(STATION_S[rIdx] - 3, new THREE.Vector3());
-  statue.position.copy(RP).addScaledVector(RSd, (TIMELINE[rIdx].side === 'left' ? -1 : 1) * 10.5);
-  statue.lookAt(RP.x, 0, RP.z);
-  scene.add(statue);
-  EXPLORABLES.push({ root: statue, name: 'Rani Lakshmibai of Jhansi',
-    blurb: '“Meri Jhansi nahi doongi.” She fell at Gwalior in June 1858, sword in hand, twenty-nine years old.' });
+  const rIdx = idxOf('revolt-1857');
+  if (rIdx >= 0){
+    const statue = buildJhansiStatue();
+    const RP = pointAt(STATION_S[rIdx] - 3, new THREE.Vector3());
+    const RSd = sideAt(STATION_S[rIdx] - 3, new THREE.Vector3());
+    statue.position.copy(RP).addScaledVector(RSd, (TIMELINE[rIdx].side === 'left' ? -1 : 1) * 10.5);
+    statue.lookAt(RP.x, 0, RP.z);
+    scene.add(statue);
+    EXPLORABLES.push({ root: statue, name: 'Rani Lakshmibai of Jhansi',
+      blurb: '“Meri Jhansi nahi doongi.” She fell at Gwalior in June 1858, sword in hand, twenty-nine years old.' });
+  }
 
   // Maratha hill forts: over Shivaji's coronation, and again at the
   // Anglo-Maratha wars — the same swarajya, three generations on
@@ -1862,7 +1872,7 @@ function buildStations(){
    ['maratha-1775', 3, 17, .9, 'A Maratha Gadhi',
       'The hill forts held out for three more generations — the Company took them wall by wall, never all at once.']]
   .forEach(([id, ds, dist, sc, name, blurb], fi) => {
-    const i = TIMELINE.findIndex(t => t.id === id);
+    const i = idxOf(id); if (i < 0) return;
     const fort = buildMarathaFort(fi);
     const FP2 = pointAt(STATION_S[i] + ds, new THREE.Vector3());
     const FS2 = sideAt(STATION_S[i] + ds, new THREE.Vector3());
@@ -1882,7 +1892,7 @@ function buildStations(){
    [buildIndiaGate,   'wwi-1914',            2, +1, 11,  1.05, 'India Gate',
       'The All-India War Memorial: over 13,000 names of the dead of the Great War carved into its stone.']]
   .forEach(([make, id, ds, rel, dist, sc, name, blurb]) => {
-    const i = TIMELINE.findIndex(t => t.id === id);
+    const i = idxOf(id); if (i < 0) return;
     const m = make();
     const MP = pointAt(STATION_S[i] + ds, new THREE.Vector3());
     const MS = sideAt(STATION_S[i] + ds, new THREE.Vector3());

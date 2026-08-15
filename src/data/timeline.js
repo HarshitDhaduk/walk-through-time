@@ -1,5 +1,10 @@
-// The single source of truth for the whole walk.
-const TIMELINE = [
+// The single source of truth for the whole walk. Two datasets share the
+// machinery — the Record (1526–1947) and the documented corridor
+// (2014–today); which one is active is decided by the URL in walk.js.
+import { WALK } from './walk.js';
+import { LEDGER_TIMELINE, LEDGER_ZONES, LEDGER_MARKER_YEARS } from './ledger-timeline.js';
+
+const MAIN_TIMELINE = [
   // ---- Zone 1 · Rise of the Mughals -----------------------------
   { id:"panipat1-1526", era:"mughal", zone:0, year:"1526", side:"left",  accent:"#E0A458", prop:"cannon", art:"cannon",
     title:"First Battle of Panipat",
@@ -199,6 +204,8 @@ const TIMELINE = [
     details:"Two states, India and Pakistan, were born. Partition's human cost — hundreds of thousands dead, over ten million displaced — is remembered with sorrow." },
 ];
 
+const TIMELINE = WALK.key === 'ledger' ? LEDGER_TIMELINE : MAIN_TIMELINE;
+
 /* ---- station layout: everything below derives from TIMELINE ----
    Stations sit every 13 m starting at s=20; the finale gets extra
    room so the corridor can open into the plaza.                   */
@@ -206,31 +213,37 @@ const SPACING = 13, FIRST_S = 20;
 const STATION_S = TIMELINE.map((st, i) =>
   i < TIMELINE.length - 1 ? FIRST_S + i * SPACING
                           : FIRST_S + (TIMELINE.length - 1) * SPACING + 10);
-const sOf = id => STATION_S[TIMELINE.findIndex(t => t.id === id)];
-const S_TAJ     = sOf('shahjahan-1628');
-const MUGHAL_END= sOf('khalsa-1699');          // last warm-sandstone station
-const S_TRANS   = sOf('eic-1600');             // decline zone begins
-const S_BRIT    = sOf('mysore-1767');          // Company Raj begins
-const S_REV     = sOf('revolt-1857');          // the scorched midpoint
-const S_CROWNST = sOf('crown-1858');
-const S_FREE    = sOf('empress-1876');         // Crown rule / freedom zone
+const sOf = id => { const i = TIMELINE.findIndex(t => t.id === id); return i < 0 ? undefined : STATION_S[i]; };
+// era anchors: named stations in the Record; zone boundaries otherwise,
+// so every era-keyed system (light, floor, architecture, audio) still
+// finds its cue points in the second dataset
+const zoneFirst = z => STATION_S[TIMELINE.findIndex(t => t.zone === z)];
+const zoneLast  = z => { let s; TIMELINE.forEach((t, i) => { if (t.zone === z) s = STATION_S[i]; }); return s; };
+const S_TAJ     = sOf('shahjahan-1628')  ?? zoneFirst(1) + SPACING;
+const MUGHAL_END= sOf('khalsa-1699')     ?? zoneLast(1);           // last warm-sandstone station
+const S_TRANS   = sOf('eic-1600')        ?? zoneFirst(2);          // decline zone begins
+const S_BRIT    = sOf('mysore-1767')     ?? zoneFirst(3);          // Company Raj begins
+const S_REV     = sOf('revolt-1857')     ?? zoneFirst(3);          // the scorched midpoint
+const S_CROWNST = sOf('crown-1858')      ?? zoneLast(3);
+const S_FREE    = sOf('empress-1876')    ?? zoneFirst(4);          // Crown rule / freedom zone
 const FINALE_S  = STATION_S[TIMELINE.length - 1];
 const FLAG_S    = FINALE_S + 14;               // the tricolour, dead ahead at walk's end
 const SPAN      = FINALE_S + 8;                // camera stops here, facing the flag
 
-const ZONES = [
+const ZONE_NAMES = WALK.key === 'ledger' ? LEDGER_ZONES : [
   "I · Rise of the Mughals",
   "II · The Great Mughals",
   "III · Decline & the Company's Entry",
   "IV · Company Raj",
   "V · Crown Rule & the Freedom Struggle",
-].map((name, k) => {
+];
+const ZONES = ZONE_NAMES.map((name, k) => {
   const first = STATION_S[TIMELINE.findIndex(t => t.zone === k)];
   return { name, s0: k === 0 ? 0 : first - 8 };
 }).map((z, k, arr) => ({ ...z, s1: k < arr.length - 1 ? arr[k + 1].s0 : 1e9 }));
 
 // Progress-bar year markers (station ids resolved below)
-const MARKER_YEARS = ["1526","1600","1707","1757","1857","1947"];
+const MARKER_YEARS = WALK.key === 'ledger' ? LEDGER_MARKER_YEARS : ["1526","1600","1707","1757","1857","1947"];
 
 export { TIMELINE, SPACING, FIRST_S, STATION_S, sOf, S_TAJ, MUGHAL_END, S_TRANS,
          S_BRIT, S_REV, S_CROWNST, S_FREE, FINALE_S, FLAG_S, SPAN, ZONES, MARKER_YEARS };

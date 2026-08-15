@@ -145,7 +145,7 @@ export default function Ledger(){
           <p>Compiled from public records; links verified {LEDGER_META.verifiedAsOf}.
              Allegations are allegations until a court rules. Corrections with sources are welcome.</p>
           <button className="ledger-go alt" onClick={() => store.set({ ledgerOpen: false })}>
-            ← Back to the Walk, 1526 – 1947
+            ← Back to the Walk
           </button>
         </footer>
       </div>

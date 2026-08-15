@@ -4,7 +4,12 @@ import { engine } from '../scene/engine.js';
 import { uiRefs } from '../bridge.js';
 import { TIMELINE } from '../data/timeline.js';
 import { PHOTOS } from '../data/photos.js';
+import { LEDGER } from '../data/ledger.js';
 import { cardImage, stationArt } from '../art/vignettes.js';
+
+/* In the documented corridor each station carries its official record:
+   the Ledger entry's audits, judgments and filings, linked. */
+const docsFor = st => st.ledger ? LEDGER.find(e => e.title === st.ledger) : null;
 
 /* One station card. Position/opacity/label-mode are driven per-frame by
    the engine through the ref; React owns only the content. Expansion is
@@ -12,6 +17,7 @@ import { cardImage, stationArt } from '../art/vignettes.js';
 function Card({ stationIdx }){
   const st = TIMELINE[stationIdx];
   const rec = PHOTOS[st.id];
+  const docs = docsFor(st);
   const [broken, setBroken] = useState(false);
 
   return (
@@ -36,6 +42,23 @@ function Card({ stationIdx }){
       <h3>{st.title}</h3>
       <p className="summary">{st.summary}</p>
       <p className="details">{st.details}</p>
+      {docs && (
+        <div className="card-docs" onClick={e => e.stopPropagation()}>
+          <b>The official record</b>
+          <ul>
+            {docs.records.filter(r => r.url).map((r, k) => (
+              <li key={k}>
+                <span className="cd-body">{r.body}</span>
+                <a href={r.url} target="_blank" rel="noopener noreferrer">{r.title}</a>
+                <span className="cd-find"> · {r.date}</span>
+              </li>
+            ))}
+          </ul>
+          {docs.remarks && docs.remarks.length > 0 && (
+            <blockquote className="cd-quote">“{docs.remarks[0].quote}”<footer>— {docs.remarks[0].who}, {docs.remarks[0].date}</footer></blockquote>
+          )}
+        </div>
+      )}
       <button className="more" aria-label="Toggle details"
               onClick={e => { e.stopPropagation(); e.currentTarget.closest('.card').classList.toggle('expanded'); }} />
     </article>

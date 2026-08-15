@@ -4,6 +4,9 @@ import { engine } from '../scene/engine.js';
 import { TIMELINE, STATION_S, ZONES } from '../data/timeline.js';
 import { PHOTOS } from '../data/photos.js';
 import { LEDGER } from '../data/ledger.js';
+import { WALK, LEDGER_WALK_URL, MAIN_WALK_URL } from '../data/walk.js';
+
+const IS_LEDGER = WALK.key === 'ledger';
 
 /* GALLERY LANDING — ported from the Claude Design "Gallery Landing":
    a printed museum catalogue of the walk. Sticky masthead with the
@@ -14,18 +17,30 @@ import { LEDGER } from '../data/ledger.js';
    TIMELINE / PHOTOS data, so new stations appear here automatically. */
 
 /* Era styling lifted from the walkway itself: FLOOR_KEYS in world.js
-   (sandstone → dust → slate → scorched → pale stone).                */
-const ERAS = [
-  { roman:'I',   short:'Rise of the Mughals',    bg:'#c79d61', fg:'#2c1f10', sub:'#5c4626', rule:'rgba(60,42,20,.4)',    note:'Warm sandstone courtyards',                     kind:'mughal' },
-  { roman:'II',  short:'The Great Mughals',      bg:'#cfa76b', fg:'#2c1f10', sub:'#5c4626', rule:'rgba(60,42,20,.4)',    note:'Cusped arches, gilt finials',                   kind:'mughal' },
-  { roman:'III', short:"Decline & the Company",  bg:'#93866f', fg:'#f6f1e4', sub:'#e2d9c6', rule:'rgba(255,250,235,.34)', note:'The corridor cracks and dims',                  kind:'transition' },
-  { roman:'IV',  short:'Company Raj',            bg:'#5d6871', fg:'#f2f5f7', sub:'#ccd5da', rule:'rgba(240,248,252,.3)',  note:'Cool colonial columns · scorched red at 1857', kind:'british' },
-  { roman:'V',   short:'Crown Rule & Freedom',   bg:'#cfcaba', fg:'#26356e', sub:'#5c5647', rule:'rgba(90,80,60,.4)',    note:'Pale stone brightening into the plaza',         kind:'freedom' },
-].map((e, k) => {
+   (sandstone → dust → slate → scorched → pale stone). The same five
+   bands serve both walks; names come from the active dataset.       */
+const ERA_STYLE = [
+  { roman:'I',   bg:'#c79d61', fg:'#2c1f10', sub:'#5c4626', rule:'rgba(60,42,20,.4)',    kind:'mughal' },
+  { roman:'II',  bg:'#cfa76b', fg:'#2c1f10', sub:'#5c4626', rule:'rgba(60,42,20,.4)',    kind:'mughal' },
+  { roman:'III', bg:'#93866f', fg:'#f6f1e4', sub:'#e2d9c6', rule:'rgba(255,250,235,.34)', kind:'transition' },
+  { roman:'IV',  bg:'#5d6871', fg:'#f2f5f7', sub:'#ccd5da', rule:'rgba(240,248,252,.3)',  kind:'british' },
+  { roman:'V',   bg:'#cfcaba', fg:'#26356e', sub:'#5c5647', rule:'rgba(90,80,60,.4)',    kind:'freedom' },
+];
+const ERA_NOTES = IS_LEDGER
+  ? ['The opening promises', 'The great schemes', 'The corridor cracks and dims', 'Scorched red at 2024', 'The plaza, where the citizens stand']
+  : ['Warm sandstone courtyards', 'Cusped arches, gilt finials', 'The corridor cracks and dims', 'Cool colonial columns · scorched red at 1857', 'Pale stone brightening into the plaza'];
+const ERA_SHORT = IS_LEDGER
+  ? ['The Mandate', 'The Great Schemes', 'The Cracks', 'The Scorched Year', 'The Plaza, Today']
+  : ['Rise of the Mughals', 'The Great Mughals', 'Decline & the Company', 'Company Raj', 'Crown Rule & Freedom'];
+const yearOf = (y, end) => { const m = y.match(/\d{4}/g); return m ? (end ? m[m.length - 1] : m[0]) : y; };
+const ERAS = ERA_STYLE.map((e, k) => {
   const rows = TIMELINE.filter(t => t.zone === k);
-  const y0 = rows[0].year.slice(0, 4), y1 = rows[rows.length - 1].year.slice(-4);
-  return { ...e, name: ZONES[k].name.split(' · ')[1], years: `${y0}–${y1}`, s0: k === 0 ? null : ZONES[k].s0 };
+  const y0 = yearOf(rows[0].year), y1 = yearOf(rows[rows.length - 1].year, true);
+  return { ...e, short: ERA_SHORT[k], note: ERA_NOTES[k], name: ZONES[k].name.split(' · ')[1],
+    years: y0 === y1 ? y0 : `${y0}–${y1}`, s0: k === 0 ? null : ZONES[k].s0 };
 });
+const RANGE = IS_LEDGER ? '2014 — today' : '1526 — 1947';
+const RANGE_MARKERS = IS_LEDGER ? ['2014','2018','2021','2024','2026'] : ['1526','1600','1707','1757','1857','1947'];
 
 /* frame treatment per era, echoing the 3D frames */
 const FRAME = {
@@ -37,15 +52,17 @@ const FRAME = {
 
 const ALL = TIMELINE.map((t, i) => ({ ...t, i, photo: !!PHOTOS[t.id], station: String(i + 1).padStart(2, '0') }));
 const PLATES = ALL.filter(s => s.photo).map((s, i) => ({ ...s, no: String(i + 1).padStart(2, '0') }));
-const HERO = PLATES.find(p => p.id === 'independence-1947') || PLATES[PLATES.length - 1];
+const HERO = PLATES.find(p => p.id === (IS_LEDGER ? 'neet-2026' : 'independence-1947')) || PLATES[PLATES.length - 1];
 const LEDGER_LINKS = LEDGER.reduce((n, e) => n + e.records.filter(r => r.url).length
   + (e.remarks ? e.remarks.filter(r => r.url).length : 0) + (e.press ? e.press.length : 0), 0);
-const YEARS_WALKED = 1947 - 1526;
+const YEARS_WALKED = IS_LEDGER ? 2026 - 2014 : 1947 - 1526;
+const HERO_ERA = ERAS[HERO.zone] ? ERAS[HERO.zone].roman : 'V';
 
 const MONO = "'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace";
 
 export default function Landing(){
   const { load, ready, started, resume, hashIdx, error } = useStore();
+  useEffect(() => { document.title = WALK.docTitle; }, []);
   const [era, setEra] = useState(-1);
   const [lb, setLb] = useState(-1);      // index into PLATES
 
@@ -74,8 +91,15 @@ export default function Landing(){
   const beginAtStation = i => begin(STATION_S[i]);
   const cur = lb >= 0 ? PLATES[lb] : null;
 
-  const bands = ERAS.map((e, k) => ({ ...e, k, plates: PLATES.filter(p => p.zone === k) }))
-    .filter(b => era < 0 || era === b.k);
+  // every corridor is listed; only the chosen one is opened to show its plates
+  const bands = ERAS.map((e, k) => ({ ...e, k, plates: PLATES.filter(p => p.zone === k), open: era === k }));
+  const pickEra = k => {
+    setEra(k);
+    if (k >= 0) setTimeout(() => {
+      const el = document.getElementById('band-' + k);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 30);
+  };
 
   return (
     <div id="landing" role="dialog" aria-label="Welcome" className={started ? 'hidden' : ''}>
@@ -88,9 +112,10 @@ export default function Landing(){
               <span className="gl-tri" aria-hidden="true"><i /><i /><i /></span>
               <span>Walk Through Time</span>
             </div>
-            <div className="gl-switch" role="group" aria-label="Choose a section">
-              <span className="on">The Record · 1526–1947</span>
-              <button onClick={() => store.set({ ledgerOpen: true })}>A Cockroach's Questions ↗</button>
+            <div className="gl-switch" role="group" aria-label="Choose your version of history">
+              {IS_LEDGER
+                ? <><a href={MAIN_WALK_URL} className="lnk">↩ The Record · 1526–1947</a><span className="on">The Ledger · 2014–today</span></>
+                : <><span className="on">The Record · 1526–1947</span><button onClick={() => store.set({ bhaktOpen: true })}>For Andhbhakts ↗</button></>}
             </div>
             <nav className="gl-nav">
               <a href="#promenade">Plates</a>
@@ -126,13 +151,19 @@ export default function Landing(){
 
           <div className="gl-wrap gl-hero-grid">
             <div>
-              <div className="gl-kicker">A memorial promenade · Public domain</div>
-              <h1>The Independence<br />Struggle</h1>
-              <div className="gl-range"><span>1526 — 1947</span><span className="bar" aria-hidden="true" /></div>
+              <div className="gl-kicker">{IS_LEDGER ? 'The documented corridor · Every plate has its papers' : 'A memorial promenade · Public domain'}</div>
+              {IS_LEDGER
+                ? <h1>A Cockroach's<br />Questions</h1>
+                : <h1>The Independence<br />Struggle</h1>}
+              <div className="gl-range"><span>{RANGE}</span><span className="bar" aria-hidden="true" /></div>
               <p className="gl-lede">
-                {ALL.length} milestones inlaid in stone, from Babur's cannon at Panipat to the marble plaza at
-                midnight. {PLATES.length} of them hang behind glass in era-built frames — sandstone arches, colonial
-                pediments, plain white slabs — and you can walk the whole corridor end to end.
+                {IS_LEDGER
+                  ? <>{ALL.length - 1} matters of the present era, walked the same way as the four centuries before them:
+                      a year inlaid in the floor, a photograph behind glass, and beside each one its papers — the audit,
+                      the judgment, the filing, the answer in Parliament. {LEDGER_LINKS} documents. Not one forward.</>
+                  : <>{ALL.length} milestones inlaid in stone, from Babur's cannon at Panipat to the marble plaza at
+                      midnight. {PLATES.length} of them hang behind glass in era-built frames — sandstone arches, colonial
+                      pediments, plain white slabs — and you can walk the whole corridor end to end.</>}
               </p>
               <div className="gl-cta">
                 <button className="gl-btn-navy" disabled={!ready} onClick={() => begin(null)}
@@ -164,7 +195,7 @@ export default function Landing(){
               </div>
               <figcaption>
                 <div className="gl-tag"><span className="saffron" aria-hidden="true" />
-                  <span>Plate {HERO.no} · Era V · Station {HERO.station}</span></div>
+                  <span>Plate {HERO.no} · Era {HERO_ERA} · Station {HERO.station}</span></div>
                 <div className="gl-cap-title">{HERO.title}</div>
                 <p>Behind glass at the marble plaza · {PHOTOS[HERO.id].credit}</p>
               </figcaption>
@@ -185,11 +216,11 @@ export default function Landing(){
               <div className="gl-count">On the wall<br /><b>{shown.length}</b> of {PLATES.length}</div>
             </div>
             <div className="gl-rail" role="group" aria-label="Jump to an era">
-              {[{ k:-1, roman:'All eras', short:'The whole walk', years:'1526–1947', count:PLATES.length, bg:'#26356e', fg:'#f0ead9' }]
+              {[{ k:-1, roman:'All eras', short:'The whole walk', years:RANGE.replace(' — ', '–'), count:PLATES.length, bg:'#26356e', fg:'#f0ead9' }]
                 .concat(ERAS.map((e, k) => ({ k, roman:'Era ' + e.roman, short:e.short, years:e.years,
                   count:PLATES.filter(p => p.zone === k).length, bg:e.bg, fg:e.fg })))
                 .map(r => (
-                  <button key={r.k} onClick={() => setEra(r.k)}
+                  <button key={r.k} onClick={() => pickEra(r.k)}
                           className={era === r.k ? 'on' : ''}
                           style={{ background:r.bg, color:r.fg }}>
                     <span className="r">{r.roman}</span>
@@ -198,26 +229,29 @@ export default function Landing(){
                   </button>
                 ))}
             </div>
-            <div className="gl-markers">{['1526','1600','1707','1757','1857','1947'].map(m => <span key={m}>{m}</span>)}</div>
+            <div className="gl-markers">{RANGE_MARKERS.map(m => <span key={m}>{m}</span>)}</div>
           </div>
         </section>
 
         {/* ---- era bands ---- */}
         {bands.map(b => (
-          <section key={b.k} className="gl-band" style={{ background:b.bg }}>
+          <section key={b.k} id={'band-' + b.k} className={'gl-band' + (b.open ? ' open' : '')} style={{ background:b.bg }}>
             <div className="gl-inlay big" aria-hidden="true" />
             <div className="gl-wrap">
-              <div className="gl-band-head" style={{ borderColor:b.rule }}>
+              <button className="gl-band-head" style={{ borderColor:b.rule, color:b.fg }}
+                      aria-expanded={b.open} onClick={() => pickEra(b.open ? -1 : b.k)}>
                 <div className="gl-band-title">
                   <span className="gl-medal" style={{ borderColor:b.rule }} aria-hidden="true"><i style={{ background:b.rule }} /></span>
                   <div>
-                    <div className="gl-kicker" style={{ color:b.sub }}>Era {b.roman} · {b.years}</div>
+                    <div className="gl-kicker" style={{ color:b.sub }}>Era {b.roman} · {b.years} · {b.plates.length} plates</div>
                     <h3 style={{ color:b.fg }}>{b.name}</h3>
                   </div>
                 </div>
-                <div className="gl-band-note" style={{ color:b.sub }}>{b.note}</div>
-              </div>
-              <div className="gl-plates">
+                <div className="gl-band-note" style={{ color:b.sub }}>
+                  {b.note}<span className="gl-band-cta">{b.open ? 'Close the corridor ↑' : 'Enter the corridor ↓'}</span>
+                </div>
+              </button>
+              {b.open && <div className="gl-plates">
                 {b.plates.map(p => {
                   const scorch = p.id === 'revolt-1857';
                   const f = FRAME[b.kind];
@@ -237,7 +271,7 @@ export default function Landing(){
                     </button>
                   );
                 })}
-              </div>
+              </div>}
             </div>
           </section>
         ))}
@@ -247,9 +281,10 @@ export default function Landing(){
           <div className="gl-wrap narrow">
             <div className="gl-tri lg" aria-hidden="true"><i /><i /><i /></div>
             <h2>The corridor opens into the plaza</h2>
-            <p>At the end of the walk the walls fall away, the floor turns to white marble bearing the Ashoka
-               Chakra, and the tricolour stands at midnight. Every plate you just read is hung along the way.</p>
-            <button className="gl-btn-navy" disabled={!ready} onClick={() => begin(null)}>Begin the Walk · 1526</button>
+            <p>{IS_LEDGER
+              ? 'At the end of this walk too the walls fall away, the floor turns to white marble bearing the Ashoka Chakra, and the tricolour stands — over the plaza where the citizens now stand. Every plate you just read is hung along the way, with its papers.'
+              : 'At the end of the walk the walls fall away, the floor turns to white marble bearing the Ashoka Chakra, and the tricolour stands at midnight. Every plate you just read is hung along the way.'}</p>
+            <button className="gl-btn-navy" disabled={!ready} onClick={() => begin(null)}>Begin the Walk · {IS_LEDGER ? '2014' : '1526'}</button>
           </div>
         </section>
 
@@ -285,13 +320,27 @@ export default function Landing(){
         <section id="ledger-callout" className="gl-ledger">
           <div className="gl-wrap gl-ledger-grid">
             <div>
-              <div className="gl-kicker gold">The other section · 2014 – present</div>
-              <h2>A Cockroach's Questions</h2>
-              <p>The walk ends at midnight, 1947. Accountability doesn't end anywhere. In a democracy, questioning
-                 the government is not disloyalty — it is the duty this archive was built to remind you of. The
-                 Republic's Ledger documents the present era only through what the official record says: audit
-                 reports, court judgments, regulatory filings, parliamentary answers.</p>
-              <button className="gl-btn-gold" onClick={() => store.set({ ledgerOpen: true })}>Ask the questions →</button>
+              {IS_LEDGER ? <>
+                <div className="gl-kicker gold">The other section · 1526 – 1947</div>
+                <h2>Nobody handed anybody freedom.</h2>
+                <p>Four hundred and twenty-one years of people were jailed, shot, starved and hanged for the thing
+                   you were born holding. That walk is on the other page — {ALL.length > 20 ? '' : 'forty-eight stations, forty-four photographs, '}public domain.
+                   This one is what a citizen does with the freedom afterwards.</p>
+                <div className="gl-cta"><a className="gl-btn-gold" href={MAIN_WALK_URL}>↩ Walk 1526 → 1947</a>
+                  <button className="gl-btn-paper" onClick={() => store.set({ ledgerOpen: true })}>Read the Ledger</button></div>
+              </> : <>
+                <div className="gl-kicker gold">The other section · 2014 – present</div>
+                <h2>A Cockroach's Questions</h2>
+                <p>The walk ends at midnight, 1947. Accountability doesn't end anywhere. In a democracy, questioning
+                   the government is not disloyalty — it is the duty this archive was built to remind you of. The
+                   Republic's Ledger documents the present era only through what the official record says: audit
+                   reports, court judgments, regulatory filings, parliamentary answers.</p>
+                <div className="gl-cta">
+                  <a className="gl-btn-gold" href={LEDGER_WALK_URL}>Walk 2014 → today →</a>
+                  <button className="gl-btn-paper" onClick={() => store.set({ ledgerOpen: true })}>Read the Ledger</button>
+                  <button className="gl-btn-paper" onClick={() => store.set({ bhaktOpen: true })}>For Andhbhakts ↗</button>
+                </div>
+              </>}
             </div>
             <div className="gl-facts">
               {[[String(LEDGER_LINKS), 'Verified source links'], ['2014', 'Record begins'], ['0', 'Claims without a document']].map(([n, l]) => (
@@ -306,8 +355,12 @@ export default function Landing(){
           <div className="gl-wrap gl-foot-grid">
             <div>
               <div className="gl-tri" aria-hidden="true"><i /><i /><i /></div>
-              <p>All {PLATES.length} images are public-domain works from Wikimedia Commons, downloaded rather than
-                 hotlinked, with per-plate attribution shown in the walk. Corrections with sources are welcome.</p>
+              <p>{IS_LEDGER
+                ? <>All {PLATES.length} images are free-licence works from Wikimedia Commons (Creative Commons and GODL-India),
+                     downloaded rather than hotlinked, with the required attribution shown on every plate. Where no photograph
+                     of the exact subject exists, the caption says what the image is. Corrections with sources are welcome.</>
+                : <>All {PLATES.length} images are public-domain works from Wikimedia Commons, downloaded rather than
+                     hotlinked, with per-plate attribution shown in the walk. Corrections with sources are welcome.</>}</p>
             </div>
             <div className="gl-keys">
               <div>Scroll or arrow keys to walk</div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useStore, store } from '../store.js';
 import { TIMELINE, ZONES } from '../data/timeline.js';
+import { WALK } from '../data/walk.js';
 import { PHOTOS } from '../data/photos.js';
 import { cardImage, stationArt } from '../art/vignettes.js';
 
@@ -32,8 +33,8 @@ export default function TextTimeline(){
         <button id="close-timeline" onClick={() => store.set({ timelineOpen: false })}>
           Return to the 3D walk ↩
         </button>
-        <h2>Timeline: Mughal Empire &amp; British Rule in India</h2>
-        <p className="sub">1526 – 1947 · Plain-text version of every station on the walkway.</p>
+        <h2>{WALK.key === 'ledger' ? 'Timeline: The Republic’s Ledger' : 'Timeline: Mughal Empire & British Rule in India'}</h2>
+        <p className="sub">{WALK.range} · Plain-text version of every station on the walkway.</p>
         <ol id="timeline-list">
           {TIMELINE.map(st => <Entry key={st.id} st={st} />)}
         </ol>

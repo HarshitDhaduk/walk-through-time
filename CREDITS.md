@@ -56,3 +56,31 @@ a more respectful choice than a photograph of the dead.
 | `goiact-1935` | [Mahatma Gandhi aboard the S.S. Rajputana en route to the Second Round Table Conference](https://commons.wikimedia.org/wiki/File%3AMahatma_Gandhi_aboard_the_S.S._Rajputana_en_route_to_the_Second_Round_Table_Conference.jpg) | James A. Mills · Public domain · Wikimedia Commons |
 | `independence-1947` | [Jawaharlal Nehru delivering his "tryst with destiny" speech](https://commons.wikimedia.org/wiki/File%3AJawaharlal_Nehru_delivering_his_%22tryst_with_destiny%22_speech.jpg) | Unknown author · Public domain · Wikimedia Commons |
 | `noncooperation-1920` | [Gandhi with Deshbandu C. R. Das](https://commons.wikimedia.org/wiki/File%3AGandhi_with_Deshbandu_C._R._Das.jpg) | Unknown author · Public domain · Wikimedia Commons |
+
+## The documented corridor · 2014–today
+
+These are contemporary photographs, so most are **Creative Commons** or **GODL-India**
+(Government Open Data Licence) rather than public domain; each requires the attribution
+given here, and CC BY-SA works must be shared under the same licence. Where no
+photograph of the exact subject exists on Commons, the caption says what the image is.
+
+| Station | Image | Credit |
+|---|---|---|
+| `agencies-2014` | [CBI Headquarters, Delhi](https://commons.wikimedia.org/wiki/File:CBI_Headquaters_Delhi.jpg) | Pulakit Singh · CC BY-SA 4.0 |
+| `rafale-2015` | [IAF Rafale landing at Hasimara](https://commons.wikimedia.org/wiki/File:Dassault_Rafale_of_Indian_Air_Force_squadron_101_landing_in_Hasimara.jpg) | Ministry of Defence, GoI · GODL-India |
+| `demonetisation-2016` | [Queue at bank, Kolkata, 10 Nov 2016](https://commons.wikimedia.org/wiki/File:Queue_at_Bank_to_Exchange_INR_500_and_1000_Notes_-_Salt_Lake_City_-_Kolkata_2016-11-10_02103.jpg) | Biswarup Ganguly · CC BY 3.0 |
+| `bankfraud-2016` | [PNB Head Office](https://commons.wikimedia.org/wiki/File:PNB_Head_Office.jpg) | Meet.arpit99 · CC BY-SA 4.0 |
+| `electoral-bonds-2018` | [Supreme Court of India, front view](https://commons.wikimedia.org/wiki/File:Supreme_Court_of_India_front_view_06.jpg) | Pinakpani · CC BY-SA 4.0 |
+| `pmcares-2020` | [Migrant workers queue for food, Delhi, 2020](https://commons.wikimedia.org/wiki/File:Migrant_workers_stand_in_a_queue_for_food_at_Delhi_Govt_school_during_COVID-19_Lockdown_at_Delhi.jpg) | Goutam1962 · CC BY-SA 4.0 |
+| `central-vista-2020` | [New Parliament Building, New Delhi](https://commons.wikimedia.org/wiki/File:New_Parliament_Building,_New_Delhi.jpg) | Ministry of Parliamentary Affairs · GODL-India |
+| `pegasus-2021` | [Illustration of spyware surveillance](https://commons.wikimedia.org/wiki/File:Corte_de_EE.UU._rechaza_apelaci%C3%B3n_de_NSO_Group_en_litigio_contra_WhatsApp.jpg) | Gibrán Aquino · CC BY-SA 4.0 (an illustration, not a photograph) |
+| `covid-2021` | [Oxygen Express tankers at Kalamboli](https://commons.wikimedia.org/wiki/File:Oxygen_Express_Empty_Tankers_at_Kalamboli.jpg) | Ministry of Railways / PIB · GODL-India |
+| `cag-2022` | [Dwarka Expressway](https://commons.wikimedia.org/wiki/File:Dwarka_Expressway.jpg) | Baba Ovian · CC BY-SA 3.0 |
+| `adani-2023` | [Mundra Port](https://commons.wikimedia.org/wiki/File:Mundra_port.jpg) | Vijay8808 · CC BY-SA 4.0 |
+| `ec-appointments-2023` | [CEC at Nirvachan Sadan, 2017](https://commons.wikimedia.org/wiki/File:The_Chief_Election_Commissioner,_Dr._Nasim_Zaidi_keeping_track_of_counting_process_underway_in_158_counting_centres_across_five_States,_at_Nirvachan_Sadan,_in_New_Delhi_on_March_11,_2017.jpg) | Election Commission of India · GODL-India |
+| `chandigarh-2024` | [Punjab & Haryana High Court](https://commons.wikimedia.org/wiki/File:Chandigarh_High_Court.jpg) | gb pandey · CC BY-SA 2.0 |
+| `neet-2024` | [Supreme Court of India, front view](https://commons.wikimedia.org/wiki/File:Supreme_Court_of_India_front_view_06.jpg) | Pinakpani · CC BY-SA 4.0 |
+| `governors-2025` | [Raj Bhavan, Chennai (event, 2017)](https://commons.wikimedia.org/wiki/File:The_Vice_President,_Shri_M._Venkaiah_Naidu_inaugurating_the_400kWp_Solar_Power_Plant_at_Raj_Bhavan,_in_Chennai,_Tamil_Nadu.jpg) | Vice President’s Secretariat · GODL-India |
+| `bihar-sir-2025` | [Voters queue, Gaya, Bihar 2020](https://commons.wikimedia.org/wiki/File:Voters_standing_in_the_queue_to_cast_their_votes,_at_a_polling_booth,_during_the_first_phase_of_the_Bihar_Assembly_Election,_at_New_Madhya_Vidyalaya,_in_Gaya,_Bihar_on_October_28,_2020.jpg) | Election Commission of India · GODL-India |
+| `varma-2025` | [Allahabad High Court](https://commons.wikimedia.org/wiki/File:Allahabad_high_court.jpg) | Vroomtrapit · CC0 |
+| `neet-2026` | [Students protest at Jantar Mantar, 20 July 2026](https://commons.wikimedia.org/wiki/File:Students_from_All_Over_India_protesting_against_2026_NEET_UG_paper_leak_place_Jantar_Mantar_on_20_July_2026_ahead_of_Parliament_March_26.jpg) | Sumita Roy Dutta · CC BY-SA 4.0 |

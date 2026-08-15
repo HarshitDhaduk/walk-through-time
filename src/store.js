@@ -15,7 +15,8 @@ let snap = {
   lightbox: null,                // station index or null
   timelineOpen: false,
   indexOpen: false,
-  ledgerOpen: false,             // the 2014–present accountability gallery
+  ledgerOpen: false,             // the 2014–present accountability record
+  bhaktOpen: false,              // the "For Andhbhakts" satire page
   montage: { active: false, idx: 0 },
   explore: null,                 // { name, blurb } while circling a clicked element
   tourOn: false,

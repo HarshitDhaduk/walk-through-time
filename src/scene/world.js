@@ -292,6 +292,7 @@ const nearStation = (s, r = 3.4) => STATION_S.some(ss => Math.abs(ss - s) < r);
 
 const dummy = new THREE.Object3D();
 function placeAlong(list, mesh){                 // list: [{s, side?, yaw?, y?, scale?}]
+  if (!list.length){ mesh.count = 0; return; }   // a shorter walk may leave a range empty
   list.forEach((it, i) => {
     pointAt(it.s, _p); tangentAt(it.s, _t);
     if (it.side){ sideAt(it.s, _side); _p.addScaledVector(_side, it.side); }
@@ -413,7 +414,7 @@ function buildArchitecture(){
     cypTint.setHSL(.30 + (Math.random()-.5)*.03, .32 + Math.random()*.14, .42 + Math.random()*.14);
     cypMesh.setColorAt(i, cypTint);
   }
-  cypMesh.instanceColor.needsUpdate = true;
+  if (cypMesh.instanceColor) cypMesh.instanceColor.needsUpdate = true;
 
   // British colonial columns (zone 4) — fluted shafts with entasis,
   // moulded bases and Doric capitals. The fluting is a vertical light/
