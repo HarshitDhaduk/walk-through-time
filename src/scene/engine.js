@@ -556,14 +556,16 @@ function goHome(){
     STATION_S.forEach((s, i) => { const d = Math.abs(s - sCam); if (d < best){ best = d; near = i; } });
     store.set({ resume: { s: sCam, idx: near }, hashIdx: -1 });
   }
-  try { history.replaceState(null, '', location.pathname); } catch {}
+  try { history.replaceState(null, '', location.pathname + location.search); } catch {}
   lastHashIdx = -1;
   state.started = false;
   state.target = state.progress = 0;
   state.intro = 1;                    // the aerial glide plays again on Begin
   document.body.style.overflow = 'hidden';
   scrollTo(0, 0);
-  store.set({ started: false });
+  // in the 2014→today walk, home is the "For Andhbhakts" page
+  const inLedger = new URLSearchParams(location.search).get('walk') === 'ledger';
+  store.set({ started: false, bhaktOpen: inLedger });
 }
 
 export const engine = {

@@ -463,107 +463,6 @@
 #explore-cap span{font-size:12.5px;line-height:1.5;opacity:.88}
 #explore-cap i{display:block;font-size:10.5px;opacity:.5;margin-top:6px;font-style:normal}
 
-/* THE REPUBLIC'S LEDGER — the site's second section, 2014–present.
-   The walk's opposite: cool, printed, evidentiary. The documents are the design. */
-#ledger{position:fixed;inset:0;z-index:180;overflow-y:auto;background:#f4efe4;
-  color:#2e2a22;overscroll-behavior:contain}
-#ledger-close{position:fixed;top:12px;right:16px;background:rgba(30,47,99,.92);
-  border:1px solid rgba(255,255,255,.35);border-radius:999px;color:#fff;
-  padding:8px 14px;cursor:pointer;font-size:12.5px;z-index:3;backdrop-filter:blur(6px);
-  box-shadow:0 4px 16px rgba(0,0,0,.25)}
-#ledger-close:hover{background:#1e2f63;border-color:#fff}
-.ledger-inner{padding-top:40px}
-@media (min-width:1100px){ #ledger-close{right:calc(50% - 540px)} }
-.ledger-hero{background:
-    radial-gradient(60% 80% at 50% 100%,rgba(246,200,119,.18),transparent 70%),
-    linear-gradient(180deg,#131f45 0%,#1e2f63 60%,#24386f 100%);
-  color:#e6ebf6;padding:88px 22px 64px;text-align:center;
-  border-bottom:6px solid;border-image:linear-gradient(90deg,#FF9933 33.3%,#f4efe4 33.3% 66.6%,#138808 66.6%) 1}
-.ledger-hero-in{max-width:760px;margin:0 auto}
-.ledger-kicker{font-size:11.5px;letter-spacing:.3em;text-transform:uppercase;color:#ffb75e}
-#ledger h2{font-family:var(--serif);font-size:clamp(30px,5vw,50px);color:#fff;margin:10px 0 18px;line-height:1.1}
-.ledger-preamble{font-size:15.5px;line-height:1.75;margin:0 auto 30px;max-width:640px;color:#d5dcf0}
-.ledger-stats{display:flex;justify-content:center;gap:34px;flex-wrap:wrap;margin-bottom:30px}
-.ledger-stats div{text-align:center}
-.ledger-stats b{display:block;font-family:var(--serif);font-size:38px;color:#f6c877;line-height:1}
-.ledger-stats span{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-  color:#aab6d8;margin-top:6px}
-.ledger-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.ledger-go{font-family:var(--serif);font-size:15px;color:#1e2f63;background:#f6c877;border:none;
-  border-radius:999px;padding:12px 26px;cursor:pointer;transition:transform .15s}
-.ledger-go:hover{transform:translateY(-2px)}
-.ledger-go.alt{background:transparent;color:#e6ebf6;border:1px solid rgba(230,235,246,.5)}
-.ledger-go.alt:hover{border-color:#fff}
-.ledger-inner{max-width:840px;margin:0 auto;padding:40px 22px 80px}
-.ledger-method-box{background:#fffdf6;border:1px solid #e4d6b6;border-left:4px solid #1e2f63;
-  border-radius:10px;padding:18px 22px;margin:0 0 42px}
-.ledger-method-box > b{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#7a6c52}
-.ledger-method-box p{font-size:13.5px;line-height:1.7;margin:8px 0 0}
-.ledger-legend{display:flex;gap:8px;flex-wrap:wrap}
-.ledger-list{list-style:none;margin:0;padding:0;border-left:2px solid #d8c9a8}
-.le-remarks{background:#1e2f63;color:#e6ebf6;border-radius:10px;padding:14px 18px 6px;
-  margin:0 0 12px;max-width:680px}
-.le-remarks > b{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#ffb75e}
-.le-remarks blockquote{margin:12px 0 12px;padding:0 0 0 14px;border-left:3px solid #f6c877}
-.le-remarks blockquote p{font-family:var(--serif);font-size:15px;line-height:1.6;margin:0 0 6px;color:#fff}
-.le-remarks footer{font-size:11.5px;color:#aab6d8;line-height:1.5}
-.le-remarks footer a{color:#f6c877}
-.ledger-foot button{margin-top:16px}
-.ledger-entry{position:relative;padding:0 0 34px 24px}
-.ledger-entry::before{content:"";position:absolute;left:-6px;top:8px;width:10px;height:10px;
-  border-radius:50%;background:#1e2f63}
-.le-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.le-year{font-family:var(--serif);font-size:13.5px;letter-spacing:.08em;color:#b05e18;font-weight:700}
-.ledger-entry h3{font-family:var(--serif);font-size:20px;color:#1e2f63;margin:0}
-.le-badge{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;border-radius:999px;
-  padding:3px 10px;font-weight:600}
-.b-adj{background:#1e2f63;color:#fff}
-.b-aud{background:#8a5a1c;color:#fff}
-.b-alg{background:#e4dcc8;color:#5c5140;border:1px solid #c9ba97}
-.b-ong{background:#3c6470;color:#fff}
-.b-dis{background:#e4dcc8;color:#5c5140;border:1px solid #c9ba97}
-.le-summary{font-size:14px;line-height:1.7;margin:9px 0 12px;max-width:680px}
-.le-docs{background:#fffdf6;border:1px solid #e4d6b6;border-radius:10px;padding:14px 18px;max-width:680px}
-.le-docs > b{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#7a6c52}
-.le-docs ul{list-style:none;margin:8px 0 0;padding:0}
-.le-docs li{font-size:13px;line-height:1.65;padding:5px 0;border-top:1px solid #f0e8d2}
-.le-docs li:first-child{border-top:none}
-.le-body{display:inline-block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
-  background:#1e2f63;color:#fff;border-radius:4px;padding:1.5px 7px;margin-right:8px;
-  position:relative;top:-1px}
-.le-docs a{color:#14418c;text-decoration:underline;text-underline-offset:2px}
-.le-docs a:hover{color:#b05e18}
-.le-pending{color:#8a7c60;font-style:italic}
-.le-find{color:#5c5342}
-.le-press{font-size:12px;margin:10px 0 0;color:#5c5342}
-.le-press a{color:#14418c}
-.le-note{font-size:11.5px;color:#8a7c60;margin:8px 0 0;font-style:italic}
-.ledger-foot{margin-top:26px;padding-top:18px;border-top:1px solid #d8c9a8;
-  font-size:12px;color:#7a6c52;line-height:1.6}
-.ledger-foot .ledger-go.alt{color:#1e2f63;border-color:#1e2f63}
-@media (max-width:640px){
-  .ledger-inner{padding:30px 14px 60px}
-  .ledger-entry{padding-left:16px}
-}
-
-/* card docs panel — the documented corridor's papers, on the card itself */
-.card-docs{margin:10px 0 0;padding:10px 12px;background:rgba(30,47,99,.22);border:1px solid rgba(240,192,122,.3);
-  border-radius:8px;font-size:11.5px;line-height:1.5}
-.card-docs > b{display:block;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#f0c07a;margin-bottom:6px}
-.card-docs ul{list-style:none;margin:0;padding:0}
-.card-docs li{padding:3px 0;border-top:1px solid rgba(255,255,255,.08)}
-.card-docs li:first-child{border-top:none}
-.cd-body{display:inline-block;font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;background:#26356e;color:#fff;
-  border-radius:3px;padding:1px 6px;margin-right:6px;position:relative;top:-1px}
-.card-docs a{color:#ffe0b0;text-decoration:underline;text-underline-offset:2px}
-.card-docs a:hover{color:#fff}
-.cd-find{opacity:.65}
-.cd-quote{margin:8px 0 0;padding:0 0 0 10px;border-left:2px solid #f0c07a;font-family:var(--serif);font-size:12px;
-  line-height:1.5;color:#f5ead6}
-.cd-quote footer{font-family:var(--sans);font-size:10px;opacity:.7;margin-top:3px}
-.card:not(.expanded) .card-docs{display:none}
-.card.label-mode .card-docs{display:none}
-
 /* FOR ANDHBHAKTS — the satire page, from the design of the same name */
 #bhakt{position:fixed;inset:0;z-index:185;overflow-y:auto;background:#fff6e6;color:#141414;
   font-family:system-ui,-apple-system,'Segoe UI',sans-serif;overscroll-behavior:contain}
@@ -658,8 +557,51 @@
 .bk-foot-in{padding-top:44px;padding-bottom:48px;display:flex;flex-wrap:wrap;gap:28px;justify-content:space-between;align-items:flex-start}
 .bk-foot p{margin:0;max-width:560px;font-size:13.5px;line-height:1.75}
 .bk-foot-links{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;line-height:2.1;color:#6b6459}
-.bk-foot-links button{font:inherit;letter-spacing:inherit;text-transform:inherit;background:none;border:none;padding:0;cursor:pointer;color:#FF9933}
-.bk-foot-links button:hover{color:#fff6e6}
+.bk-foot-links button,.bk-foot-links a{font:inherit;letter-spacing:inherit;text-transform:inherit;background:none;border:none;padding:0;cursor:pointer;color:#FF9933;text-decoration:none}
+.bk-foot-links button:hover,.bk-foot-links a:hover{color:#fff6e6}
+/* the second section's own corridor sections: rail, band, plates, floor plan */
+.bk-btn.sm{padding:9px 14px;font-size:10.5px;box-shadow:none;border-width:2px}
+.bk-nav .bk-btn.sm{color:#fff6e6;background:#FF9933;border-color:#FF9933;color:#141414}
+.bk-switch a{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#b8ac9c;padding:8px 13px;text-decoration:none;white-space:nowrap}
+.bk-switch a:hover{color:#fff6e6;background:#3a332a}
+.bk-rail{margin-top:30px;display:flex;flex-wrap:wrap;gap:3px;border:3px solid #141414;padding:3px;background:#141414}
+.bk-rail button{flex:1 1 150px;text-align:left;padding:11px 13px 12px;cursor:pointer;border:none;font-family:inherit;transition:filter .16s;outline:0 solid transparent;outline-offset:-3px}
+.bk-rail button:hover{filter:brightness(1.1)}
+.bk-rail button.on{outline:3px solid #FF9933}
+.bk-rail .r{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.2em;opacity:.8}
+.bk-rail .t{display:block;font-size:14.5px;font-weight:700;line-height:1.25;margin-top:5px;letter-spacing:-.01em}
+.bk-rail .y{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;opacity:.7;margin-top:6px}
+.bk-band{margin-top:22px;border:3px solid #141414;box-shadow:8px 8px 0 #141414;padding:24px 22px 28px}
+.bk-band-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:14px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.28)}
+.bk-band-head h3{font-size:clamp(20px,2.6vw,28px);font-weight:800;letter-spacing:-.02em;margin:6px 0 0}
+.bk-band-note{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.85;max-width:320px;text-align:right}
+.bk-plates{margin-top:24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:22px 18px}
+.bk-plate{display:block;text-align:left;background:#fff;color:#141414;border:3px solid #141414;box-shadow:6px 6px 0 #141414;padding:10px;cursor:pointer;
+  font-family:inherit;transform:rotate(var(--tilt,0deg));transition:transform .18s}
+.bk-plate:hover{transform:rotate(0deg) translateY(-4px)}
+.bk-plate .pic{display:block;border:3px solid #141414;overflow:hidden}
+.bk-plate img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;filter:contrast(1.05) saturate(.9)}
+.bk-plate .acc{display:block;height:4px;margin:10px 0 8px}
+.bk-plate .yr{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:#8c3a00}
+.bk-plate .tt{display:block;font-size:15px;font-weight:800;letter-spacing:-.015em;line-height:1.25;margin-top:4px}
+.bk-plate .dc{display:block;margin-top:8px;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#6b6459;border-top:2px dashed #d8cbb4;padding-top:7px}
+.bk-plan-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:26px 34px;align-items:start;margin-top:26px}
+.bk-plan-head{display:flex;align-items:baseline;gap:10px;padding-bottom:8px;border-bottom:3px solid #141414}
+.bk-plan-head .r{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:#8c3a00}
+.bk-plan-head span:last-child{font-size:15.5px;font-weight:800;letter-spacing:-.01em}
+.bk-plan-grid ul{list-style:none;margin:0;padding:0}
+.bk-plan-grid li{border-bottom:1px solid #e2d8c2}
+.bk-plan-grid li button{display:flex;align-items:baseline;gap:12px;width:100%;text-align:left;background:none;border:none;padding:10px 6px;cursor:pointer;font-family:inherit;color:#3a352e;transition:background .14s}
+.bk-plan-grid li button:hover{background:#fff;color:#141414}
+.bk-plan-grid .yr{flex:none;width:80px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:#8c3a00}
+.bk-plan-grid .tt{flex:1;font-size:14.5px;line-height:1.35}
+.bk-plan-grid .dot{flex:none;width:8px;height:8px;align-self:center;transform:rotate(45deg);background:#141414}
+#bhakt .gl-lb{z-index:190}
+@media (max-width:640px){
+  .bk-band-note{text-align:left;max-width:none}
+  .bk-plates{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px 12px}
+  .bk-nav .bk-btn.sm{display:none}
+}
 @media (max-width:760px){
   .bk-stamp{position:static;display:inline-block;margin-top:22px;transform:rotate(-3deg)}
   .bk-nav{display:none}
@@ -667,6 +609,7 @@
 }
 .gl-switch .lnk{font:inherit;letter-spacing:inherit;text-transform:inherit;color:var(--gl-muted);padding:8px 13px;text-decoration:none;white-space:nowrap}
 .gl-switch .lnk:hover{color:var(--gl-brown);background:var(--gl-paper)}
+
 
 #zone-label{animation:zonefade .8s ease}
 @keyframes zonefade{from{opacity:0;transform:translateY(-6px)}to{opacity:.9;transform:none}}

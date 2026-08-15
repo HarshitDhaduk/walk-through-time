@@ -5,6 +5,8 @@ import { MOBILE, WALK_W as WALK_W_SHARED, smooth as smoothShared, pointAt, sideA
          _p, _t, _side, canvasTexture, MAT, gateGeometry } from './shared.js';
 import { SPACING, FIRST_S, STATION_S, sOf, S_TAJ, MUGHAL_END, S_TRANS, S_BRIT, S_REV,
          S_CROWNST, S_FREE, FLAG_S } from '../data/timeline.js';
+import { WALK } from '../data/walk.js';
+const SATIRE = WALK.key === 'ledger';   // the 2014→today corridor is dressed as decay
 
 export function createWorld(scene){
   scene.fog = new THREE.Fog(0xcaa268, 12, 95);
@@ -149,7 +151,16 @@ sky.add(clouds);
 /* ---- floor ribbon with baked per-vertex era tints ----------------
    Colours (sandstone → dust → slate → scorched 1857 → pale stone)
    are baked once; global light/fog does the live blending.        */
-const FLOOR_KEYS = [
+const FLOOR_KEYS = SATIRE ? [
+  // 2014→today: fresh tarmac at the start, worn to grey, cracked to
+  // rust-brown by the middle, dust at the end — and the plaza still white
+  [0,               C('#4a4a4c')], [MUGHAL_END,     C('#5b5754')],
+  [(S_TRANS+S_BRIT)/2, C('#6e5f52')], [S_BRIT + 8,  C('#5c5049')],
+  [S_REV - 9,       C('#584d46')], [S_REV - 4,      C('#3a2b22')],
+  [S_REV + 6,       C('#3f2f26')], [S_CROWNST + 7,  C('#6a6058')],
+  [S_FREE + 65,     C('#8a8178')], [FLAG_S - 56,    C('#a89f92')],
+  [FLAG_S - 14,     C('#d8d0c2')], [FLAG_S + 85,    C('#f0ead9')],
+] : [
   [0,               C('#c79d61')], [MUGHAL_END,     C('#cfa76b')],
   [(S_TRANS+S_BRIT)/2, C('#93866f')], [S_BRIT + 8,  C('#6a7680')],
   [S_REV - 9,       C('#5d6871')], [S_REV - 4,      C('#221310')],
@@ -174,7 +185,64 @@ function walkWidth(s){
    Inlaid-stone texture in neutral warm greys: border bands with
    diamond inlays, grouted tiles, and a lotus-star medallion every
    8 m. Era hues come from the baked vertex tints multiplying it. */
+/* the satire corridor's floor: a national highway that was inaugurated
+   twice and finished never — tarmac, a fading centre line, potholes with
+   puddles, patch-jobs, cracks, and one manhole with no cover           */
+function makeBrokenRoadTexture(){
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 512;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#8f8b86'; c.fillRect(0, 0, 512, 512);            // neutral tarmac (tinted per era)
+  for (let i = 0; i < 2600; i++){                                   // aggregate grain
+    c.fillStyle = `rgba(${20+Math.random()*40|0},${18+Math.random()*36|0},${16+Math.random()*30|0},${Math.random()*.22})`;
+    c.fillRect(Math.random()*512, Math.random()*512, 2, 2);
+  }
+  // kerb stones both edges, half of them broken
+  for (let y = 0; y < 512; y += 44){
+    [0, 470].forEach(x => {
+      const broken = ((x + y) * 7) % 5 === 0;
+      c.fillStyle = broken ? '#7c7670' : '#c9c1b2';
+      c.fillRect(x + 4, y + 3, 34, broken ? 20 : 38);
+      c.fillStyle = 'rgba(0,0,0,.25)'; c.fillRect(x + 4, y + 3 + (broken ? 20 : 38), 34, 3);
+    });
+  }
+  // the centre line — dashed, fading, repainted slightly off
+  c.fillStyle = 'rgba(255,240,180,.75)';
+  for (let y = 0; y < 512; y += 96) c.fillRect(250, y + 10, 10, 50);
+  c.fillStyle = 'rgba(255,240,180,.28)';
+  for (let y = 40; y < 512; y += 96) c.fillRect(257, y + 10, 8, 40);   // the earlier, drunker coat
+  // patch jobs: darker rectangles of fresher tar with lighter, lumpy edges
+  [[70,60,120,80],[300,300,150,70],[110,380,90,60]].forEach(([x,y,w,h]) => {
+    c.fillStyle = '#4e4a46'; c.fillRect(x, y, w, h);
+    c.strokeStyle = 'rgba(200,190,170,.35)'; c.lineWidth = 6; c.strokeRect(x, y, w, h);
+  });
+  // cracks — random walks, alligator-cracking in one corner
+  c.strokeStyle = 'rgba(25,20,16,.55)'; c.lineWidth = 2.2;
+  for (let i = 0; i < 18; i++){
+    let x = Math.random()*512, y = Math.random()*512;
+    c.beginPath(); c.moveTo(x, y);
+    for (let k = 0; k < 9; k++){ x += (Math.random()-.5)*34; y += (Math.random()-.5)*34; c.lineTo(x, y); }
+    c.stroke();
+  }
+  c.lineWidth = 1.2;
+  for (let i = 0; i < 40; i++){ const x = 330 + Math.random()*150, y = 60 + Math.random()*140;
+    c.beginPath(); c.moveTo(x, y); c.lineTo(x + (Math.random()-.5)*26, y + (Math.random()-.5)*26); c.stroke(); }
+  // potholes: dark ovals with a wet rim, one with standing water
+  const hole = (x, y, rx, ry, wet) => {
+    c.save(); c.translate(x, y); c.scale(1, ry/rx);
+    c.fillStyle = 'rgba(30,26,22,.9)'; c.beginPath(); c.arc(0, 0, rx, 0, 7); c.fill();
+    c.strokeStyle = 'rgba(70,60,50,.9)'; c.lineWidth = 6; c.stroke();
+    if (wet){ c.fillStyle = 'rgba(90,110,130,.55)'; c.beginPath(); c.arc(0, 2, rx*.72, 0, 7); c.fill();
+      c.fillStyle = 'rgba(255,255,255,.28)'; c.beginPath(); c.ellipse(-rx*.25, -rx*.2, rx*.28, rx*.1, -.5, 0, 7); c.fill(); }
+    c.restore();
+  };
+  hole(160, 250, 40, 26, true); hole(400, 430, 30, 20, false); hole(80, 470, 22, 14, true);
+  // manhole ring, no cover
+  c.strokeStyle = '#3d3935'; c.lineWidth = 8; c.beginPath(); c.arc(360, 180, 30, 0, 7); c.stroke();
+  c.fillStyle = 'rgba(15,12,10,.95)'; c.beginPath(); c.arc(360, 180, 24, 0, 7); c.fill();
+  return cv;
+}
 function makeFloorTexture(){
+  if (SATIRE) return makeBrokenRoadTexture();
   const cv = document.createElement('canvas'); cv.width = 512; cv.height = 512;
   const c = cv.getContext('2d');
   c.fillStyle = '#d9d0c1'; c.fillRect(0, 0, 512, 512);
@@ -332,6 +400,8 @@ function buildArchitecture(){
   MAT.sandstone.map = masonry; MAT.sandstone.needsUpdate = true;
   MAT.cracked.map   = masonry; MAT.cracked.needsUpdate = true;
   MAT.sandDark.map  = masonry; MAT.sandDark.needsUpdate = true;
+
+  if (SATIRE){ buildSatireWayside(); return; }
 
   // Mughal gates spanning the walkway (zones 1–2), instanced.
   // Placed at station midpoints (stations sit at s = 20 + 14i) so no gate occludes a frame.
@@ -513,6 +583,183 @@ function buildArchitecture(){
   bandGeo.translate(0, 1.78, 0);
   placeAlong(free, new THREE.InstancedMesh(bandGeo,
     new THREE.MeshStandardMaterial({ color:'#FF9933', roughness:.7 }), free.length));
+}
+
+/* ---- the 2014→today wayside: a highway that keeps getting inaugurated ----
+   Concrete crash barriers with chunks missing; streetlamps, one in three
+   dead and one leaning; a flyover that ends in mid-air with rebar
+   sticking out; scaffolding that never came down; ribbon-cutting arches
+   with "INAUGURATED" bunting over things that aren't finished; and
+   hoardings along the way whose slogans get more confident as the road
+   gets worse. Everything instanced or merged; no per-frame cost.      */
+function buildSatireWayside(){
+  const concrete = new THREE.MeshStandardMaterial({ color:'#a9a29a', roughness:.95 });
+  const concreteDark = new THREE.MeshStandardMaterial({ color:'#7c756e', roughness:.95 });
+  const rustMat = new THREE.MeshStandardMaterial({ color:'#7a4a2c', roughness:.9, metalness:.25 });
+  const steel = new THREE.MeshStandardMaterial({ color:'#6b6f75', roughness:.6, metalness:.5 });
+  const paint = new THREE.MeshStandardMaterial({ color:'#c9c4bb', roughness:.8 });
+  const END = FLAG_S - 40;
+
+  // 1) crash barriers (New Jersey profile) both sides, with missing chunks
+  const bs = new THREE.Shape();
+  bs.moveTo(-.28,0); bs.lineTo(.28,0); bs.lineTo(.22,.28); bs.lineTo(.1,.72); bs.lineTo(.1,.9);
+  bs.lineTo(-.1,.9); bs.lineTo(-.1,.72); bs.lineTo(-.22,.28); bs.closePath();
+  const barGeo = new THREE.ExtrudeGeometry(bs, { depth: 2.4, bevelEnabled:false });
+  barGeo.rotateY(Math.PI/2); barGeo.translate(-1.2, 0, 0);
+  const brokenGeo = barGeo.clone(); brokenGeo.scale(1, .55, .6);   // a shattered stump
+  const bars = [], stumps = [];
+  for (let s = 3; s <= END; s += 2.6){
+    if (nearStation(s)) continue;
+    const gap = ((s * 13) % 17) < 2;                                   // some barriers just gone
+    if (gap) continue;
+    const broken = ((s * 7) % 11) < 2;
+    const list = broken ? stumps : bars;
+    list.push({ s, side:  WALK_W/2 + 0.55, y: (Math.random()-.5)*.06, yaw: (Math.random()-.5)*.08 });
+    list.push({ s, side: -(WALK_W/2 + 0.55), y: (Math.random()-.5)*.06, yaw: (Math.random()-.5)*.08 });
+  }
+  placeAlong(bars, new THREE.InstancedMesh(barGeo, concrete, bars.length));
+  if (stumps.length) placeAlong(stumps, new THREE.InstancedMesh(brokenGeo, concreteDark, stumps.length));
+  // rebar sticking out of every stump
+  const rebar = new THREE.CylinderGeometry(.015,.015,.5,5); rebar.translate(0, .7, 0); rebar.rotateZ(.35);
+  if (stumps.length) placeAlong(stumps.map(o => ({ ...o, side: o.side * 1.02 })), new THREE.InstancedMesh(rebar, rustMat, stumps.length));
+
+  // 2) streetlamps — every 9 m, one in three dead (no pane), one in seven leaning
+  const lampParts = [];
+  const lb = new THREE.CylinderGeometry(.16,.2,.4,8); lb.translate(0,.2,0); lampParts.push(lb);
+  const lp = new THREE.CylinderGeometry(.06,.09,5.6,8); lp.translate(0,3.2,0); lampParts.push(lp);
+  const arm = new THREE.CylinderGeometry(.045,.045,1.6,6); arm.rotateZ(Math.PI/2); arm.translate(-.7,6.0,0); lampParts.push(arm);
+  const head = new THREE.BoxGeometry(.5,.14,.22); head.translate(-1.45,5.95,0); lampParts.push(head);
+  const lampGeo = mergeGeometries(lampParts);
+  const paneGeo = new THREE.BoxGeometry(.42,.06,.18); paneGeo.translate(-1.45,5.86,0);
+  const lit = [], dead = [], all = [];
+  for (let s = 8; s <= END; s += 9){
+    if (nearStation(s)) continue;
+    [1,-1].forEach(sg => {
+      const k = Math.round(s * 3 + sg);
+      const it = { s, side: sg * (WALK_W/2 + 1.35), yaw: sg > 0 ? Math.PI : 0, roll: (k % 7 === 0) ? .12 * sg : 0 };
+      all.push(it); ((k % 3) === 0 ? dead : lit).push(it);
+    });
+  }
+  placeAlong(all, new THREE.InstancedMesh(lampGeo, steel, all.length));
+  const litMat = new THREE.MeshStandardMaterial({ color:'#3a2f1c', emissive:'#ffd08a', emissiveIntensity:.9, roughness:.4 });
+  const deadMat = new THREE.MeshStandardMaterial({ color:'#26221f', roughness:.9 });
+  if (lit.length)  placeAlong(lit,  new THREE.InstancedMesh(paneGeo, litMat,  lit.length));
+  if (dead.length) placeAlong(dead, new THREE.InstancedMesh(paneGeo, deadMat, dead.length));
+
+  // 3) the flyover to nowhere — three piers, a deck, then rebar into the void
+  const fo = new THREE.Group();
+  const s0 = sOf('central-vista-2020') ?? (S_TRANS - 10);
+  pointAt(s0 + 3, _p); tangentAt(s0 + 3, _t); sideAt(s0 + 3, _side);
+  fo.position.copy(_p).addScaledVector(_side, -(WALK_W/2 + 9));
+  fo.rotation.y = Math.atan2(_t.x, _t.z);
+  [-8, 0, 8].forEach((z, i) => {
+    const pier = new THREE.Mesh(new THREE.CylinderGeometry(.9, 1.1, 7.5 - i * .3, 10), concrete);
+    pier.position.set(0, 3.75, z); fo.add(pier);
+  });
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(6, .6, 22), concreteDark);
+  deck.position.set(0, 7.6, 3); fo.add(deck);
+  const stubs = [];
+  for (let i = 0; i < 14; i++){
+    const g = new THREE.CylinderGeometry(.03,.03,2.2,5);
+    g.rotateX(Math.PI/2 + (Math.random()-.5)*.5); g.rotateZ((Math.random()-.5)*.6);
+    g.translate(-2.6 + (i % 7) * .85, 7.5 + Math.floor(i/7) * .35, 14.6);
+    stubs.push(g);
+  }
+  fo.add(new THREE.Mesh(mergeGeometries(stubs), rustMat));
+  const sign = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.2, .08), paint);
+  sign.position.set(0, 9.2, 13.4); fo.add(sign);
+  const signTex = canvasTexture(256,128,(c,w,h) => {
+    c.fillStyle = '#e9e4da'; c.fillRect(0,0,w,h);
+    c.fillStyle = '#c0392b'; c.font = '700 40px Georgia'; c.textAlign = 'center';
+    c.fillText('WORK IN', w/2, 52); c.fillText('PROGRESS', w/2, 100);
+    c.font = '400 14px monospace'; c.fillStyle = '#4a4a4a'; c.fillText('since 2020', w/2, 120);
+  });
+  const signFace = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 1.1),
+    new THREE.MeshStandardMaterial({ map: signTex, roughness:.85 }));
+  signFace.position.set(0, 9.2, 13.36); fo.add(signFace);
+  scene.add(fo);
+
+  // 4) scaffolding that never came down — a bamboo/steel cage on the other side
+  const sc = new THREE.Group();
+  const s1 = sOf('cag-2022') ?? (S_BRIT + 6);
+  pointAt(s1 - 4, _p); tangentAt(s1 - 4, _t); sideAt(s1 - 4, _side);
+  sc.position.copy(_p).addScaledVector(_side, (WALK_W/2 + 6));
+  sc.rotation.y = Math.atan2(_t.x, _t.z);
+  const poles = [];
+  for (let x = -3; x <= 3; x += 1.5) for (let z = -2; z <= 2; z += 2){
+    const g = new THREE.CylinderGeometry(.05,.05,9,6); g.translate(x, 4.5, z); poles.push(g);
+  }
+  for (let y = 1.5; y <= 9; y += 1.5){
+    for (let z = -2; z <= 2; z += 2){ const g = new THREE.CylinderGeometry(.04,.04,6.4,5); g.rotateZ(Math.PI/2); g.translate(0, y, z); poles.push(g); }
+    for (let x = -3; x <= 3; x += 1.5){ const g = new THREE.CylinderGeometry(.04,.04,4.4,5); g.rotateX(Math.PI/2); g.translate(x, y, 0); poles.push(g); }
+  }
+  sc.add(new THREE.Mesh(mergeGeometries(poles), rustMat));
+  const shell = new THREE.Mesh(new THREE.BoxGeometry(5.6, 6.5, 3.6), concreteDark);   // the building inside, unfinished
+  shell.position.y = 3.25; sc.add(shell);
+  const tarp = new THREE.Mesh(new THREE.PlaneGeometry(6.6, 4.2),
+    new THREE.MeshStandardMaterial({ color:'#2f8f5a', roughness:.9, side: THREE.DoubleSide }));
+  tarp.position.set(0, 4.5, -2.6); tarp.rotation.y = Math.PI; sc.add(tarp);
+  scene.add(sc);
+
+  // 5) INAUGURATED arches — bunting over gaps in the road, at three points
+  const inaugTex = canvasTexture(512,96,(c,w,h) => {
+    c.fillStyle = '#e8b048'; c.fillRect(0,0,w,h);
+    for (let x = 0; x < w; x += 64){ c.fillStyle = x % 128 ? '#c0392b' : '#2e7d5b'; c.beginPath(); c.moveTo(x,0); c.lineTo(x+64,0); c.lineTo(x+32,26); c.closePath(); c.fill(); }
+    c.fillStyle = '#141414'; c.font = '700 44px Georgia'; c.textAlign = 'center'; c.fillText('INAUGURATED', w/2, 72);
+  });
+  const inaugMat = new THREE.MeshStandardMaterial({ map: inaugTex, roughness:.85, side: THREE.DoubleSide });
+  [sOf('demonetisation-2016'), sOf('pmcares-2020'), sOf('neet-2024')].filter(v => v != null).forEach(sx => {
+    const g = new THREE.Group();
+    pointAt(sx - 6.5, _p); tangentAt(sx - 6.5, _t);
+    g.position.copy(_p); g.rotation.y = Math.atan2(_t.x, _t.z);
+    [-1,1].forEach(sg => {
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(.08,.1,4.4,8), steel);
+      post.position.set(sg * (WALK_W/2 + .2), 2.2, 0); g.add(post);
+    });
+    const banner = new THREE.Mesh(new THREE.PlaneGeometry(WALK_W + .4, 1.0, 12, 1), inaugMat);
+    banner.position.set(0, 4.1, 0);
+    // a lazy sag in the middle
+    const pos = banner.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++){ const x = pos.getX(i); pos.setY(i, pos.getY(i) - Math.cos(x / (WALK_W/2) * 1.4) * .22); }
+    pos.needsUpdate = true; banner.geometry.computeVertexNormals();
+    g.add(banner);
+    scene.add(g);
+  });
+
+  // 6) hoardings — slogans getting more confident as the tarmac gets worse
+  const slogans = [
+    ['ACHHE DIN', 'loading… 87%'], ['NEW INDIA', 'terms & conditions apply'],
+    ['5 TRILLION', 'ETA: soon'], ['SABKA VIKAS', 'select regions only'],
+    ['VISHWAGURU', 'no refunds'], ['STARTUP NATION', 'server not found'],
+    ['SMART CITY', 'please pay parking'], ['AMRIT KAAL', 'batteries not included'],
+  ];
+  const boardGeo = new THREE.BoxGeometry(3.6, 2.0, .1);
+  const legGeo = new THREE.CylinderGeometry(.06,.08,3.4,6);
+  slogans.forEach(([big, small], i) => {
+    // sit each hoarding at a station midpoint so it never covers a plate
+    let s = FIRST_S + 5 + i * ((END - FIRST_S) / slogans.length);
+    if (nearStation(s)) s += SPACING / 2;
+    const g = new THREE.Group();
+    pointAt(s, _p); tangentAt(s, _t); sideAt(s, _side);
+    const sg = i % 2 ? 1 : -1;
+    g.position.copy(_p).addScaledVector(_side, sg * (WALK_W/2 + 3.2));
+    g.rotation.y = Math.atan2(_t.x, _t.z) + (sg > 0 ? -.35 : .35);
+    const tex = canvasTexture(384,214,(c,w,h) => {
+      c.fillStyle = i % 3 ? '#f4efe0' : '#FF9933'; c.fillRect(0,0,w,h);
+      c.fillStyle = '#141414'; c.textAlign = 'center';
+      c.font = '800 46px Georgia'; c.fillText(big, w/2, 96);
+      c.font = '400 20px monospace'; c.fillStyle = '#4a4a4a'; c.fillText(small, w/2, 150);
+      // one corner peeling
+      c.fillStyle = 'rgba(0,0,0,.35)'; c.beginPath(); c.moveTo(w, h); c.lineTo(w-70, h); c.lineTo(w, h-50); c.closePath(); c.fill();
+      c.fillStyle = '#d9d0c1'; c.beginPath(); c.moveTo(w-70, h); c.lineTo(w, h-50); c.lineTo(w-8, h-8); c.closePath(); c.fill();
+    });
+    const board = new THREE.Mesh(boardGeo, steel); board.position.y = 4.4; g.add(board);
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 1.9),
+      new THREE.MeshStandardMaterial({ map: tex, roughness:.85 }));
+    face.position.set(0, 4.4, .06); g.add(face);
+    [-1.4, 1.4].forEach(x => { const l = new THREE.Mesh(legGeo, steel); l.position.set(x, 1.7, 0); g.add(l); });
+    scene.add(g);
+  });
 }
 
 const particleSystems = [];

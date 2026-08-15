@@ -65,7 +65,6 @@ export default function Landing(){
   useEffect(() => { document.title = WALK.docTitle; }, []);
   const [era, setEra] = useState(0);     // Era I is open by default; picking another replaces it
   const [lb, setLb] = useState(-1);      // index into PLATES
-
   const shown = useMemo(() => era < 0 ? PLATES : PLATES.filter(p => p.zone === era), [era]);
   const step = d => {
     const cur = shown.findIndex(p => p.id === (PLATES[lb] || {}).id);
@@ -83,6 +82,9 @@ export default function Landing(){
     addEventListener('keydown', onKey);
     return () => removeEventListener('keydown', onKey);
   });
+  // in the 2014→today walk the "For Andhbhakts" page is the landing; this catalogue is the Record's.
+  // (after every hook, so React's hook order is stable)
+  if (IS_LEDGER) return null;
 
   const jumpIdx = hashIdx >= 0 ? hashIdx : (resume ? resume.idx : -1);
   const jumpS   = hashIdx >= 0 ? STATION_S[hashIdx] : (resume ? resume.s : null);

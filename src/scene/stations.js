@@ -123,6 +123,13 @@ function releaseArt(stn){
    makes the camera step off the path and circle it, with a caption. */
 const EXPLORABLES = [];
 const EXPLORE_INFO = {
+  // the 2014→today corridor's props: satire of habits and offices, never a person
+  podium:   ['The Orator', 'An empty suit at a podium. The mic is on mute; the questions are stacked, unopened, at its feet. Any resemblance to a role is intentional; to a person, impossible — there’s no one in it.'],
+  forward:  ['The Forward', '“Forwarded many times.” Two blue ticks is the highest peer review some claims will ever get.'],
+  queue:    ['The Queue', 'Four hours in line for your own money. The machine says OUT OF CASH. Someone lost a shoe. Nobody lost their job over it.'],
+  scissors: ['The Ribbon', 'The ribbon has been cut. Twice. The thing behind it says PROJECT SITE · completion: TBD. There is one brick.'],
+  cabinet:  ['The Files', 'RTI · AUDIT · MINUTES · REPLIES. Every drawer open, every drawer empty, one moth. The paperwork is on the other page.'],
+  pothole:  ['The Pothole', 'Inaugurated with a garland. The DRIVE SAFE sign fell in first.'],
   cannon:   ['Field Cannon', 'Bronze artillery of the kind Babur brought to Panipat — the gunpowder edge that won an empire.'],
   banner:   ['Royal Standard', 'A standard of the age, raised wherever authority stood.'],
   milestone:['Kos Minar', 'A Grand Trunk Road mile-pillar — Sher Shah Suri’s administration, measured in stone.'],
@@ -287,6 +294,127 @@ function talwarGeo(len = .7, w = .05, curve = .24){
   return new THREE.ExtrudeGeometry(s, { depth: .014, bevelEnabled: false });
 }
 const PROPS = {
+  /* ---- the 2014→today corridor's props: satire, no faces ---------------
+     Every one of these mocks a habit, an object or an office — never a
+     likeness. The Orator is an empty suit at a podium with a mute mic. */
+  podium(){ const g = new THREE.Group();                                  // The Orator: the role, not a man
+    const wood = new THREE.MeshStandardMaterial({ color:'#5a3a22', roughness:.75 });
+    const suit = new THREE.MeshStandardMaterial({ color:'#2a2a2e', roughness:.85 });
+    const dais = new THREE.Mesh(new THREE.BoxGeometry(1.7,.22,1.2), MAT.slate); dais.position.y = .11; g.add(dais);
+    const pod = new THREE.Mesh(new THREE.BoxGeometry(.7,1.15,.5), wood); pod.position.set(0,.8,.25); g.add(pod);
+    const top = new THREE.Mesh(new THREE.BoxGeometry(.8,.06,.6), wood); top.position.set(0,1.4,.25); top.rotation.x = -.18; g.add(top);
+    // an outsized empty suit — shoulders, no head, sleeves ending in nothing
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(.34,.4,1.0,10), suit); torso.position.set(0,1.42,-.3); g.add(torso);
+    const shoulders = new THREE.Mesh(new THREE.BoxGeometry(1.15,.16,.5), suit); shoulders.position.set(0,1.95,-.3); g.add(shoulders);
+    [-1,1].forEach(sg => { const arm = new THREE.Mesh(new THREE.CylinderGeometry(.09,.11,.85,8), suit);
+      arm.position.set(sg*.62,1.55,-.15); arm.rotation.z = sg*.35; arm.rotation.x = -.35; g.add(arm); });
+    // where a head would be: a rosette of ✓ ticks — the "verified" halo — spinning slowly is done in CSS-land elsewhere; here it's static
+    const halo = new THREE.Mesh(new THREE.TorusGeometry(.26,.03,8,24), MAT.gold); halo.position.set(0,2.32,-.3); halo.rotation.x = Math.PI/2; g.add(halo);
+    // the microphone: on a gooseneck, with a big red MUTE light
+    g.add(rod(new THREE.Vector3(.2,1.44,.3), new THREE.Vector3(.1,1.9,.05), .012, MAT.iron));
+    const mic = new THREE.Mesh(new THREE.CapsuleGeometry(.05,.14,4,8), MAT.iron); mic.position.set(.09,1.98,.02); mic.rotation.x = .5; g.add(mic);
+    const mute = new THREE.Mesh(new THREE.SphereGeometry(.035,8,6),
+      new THREE.MeshBasicMaterial({ color:'#ff2a2a', toneMapped:false })); mute.position.set(.13,1.9,.08); g.add(mute);
+    // stacked, unopened question cards at the podium's foot
+    for (let i = 0; i < 6; i++){ const card = new THREE.Mesh(new THREE.BoxGeometry(.32,.02,.22), MAT.white);
+      card.position.set(-.55 + (i%2)*.06, .24 + i*.021, .5 + (i%3)*.03); card.rotation.y = (i%2 ? .2 : -.15); g.add(card); }
+    return g; },
+  forward(){ const g = new THREE.Group();                                 // the WhatsApp forward: a cloud with a tick, on a stand
+    const cloudMat = new THREE.MeshStandardMaterial({ color:'#dfe9de', roughness:.9 });
+    const stand = new THREE.Mesh(new THREE.CylinderGeometry(.05,.07,1.3,8), MAT.iron); stand.position.y = .65; g.add(stand);
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(.35,.4,.08,12), MAT.slate); base.position.y = .04; g.add(base);
+    [[0,1.55,0,.34],[-.32,1.45,0,.26],[.3,1.47,.02,.27],[-.1,1.72,-.02,.24],[.15,1.7,.03,.22]].forEach(([x,y,z,r]) => {
+      const b = new THREE.Mesh(new THREE.SphereGeometry(r,12,9), cloudMat); b.position.set(x,y,z); g.add(b); });
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(.12,.28,8), cloudMat); tail.position.set(-.38,1.2,.02); tail.rotation.z = .6; g.add(tail);
+    // double blue tick — the seal of truth
+    const tickMat = new THREE.MeshBasicMaterial({ color:'#3aa0e8', toneMapped:false });
+    [[.02,0],[.14,0]].forEach(([dx]) => {
+      g.add(rod(new THREE.Vector3(-.12+dx,1.5,.36), new THREE.Vector3(-.02+dx,1.4,.36), .016, tickMat));
+      g.add(rod(new THREE.Vector3(-.02+dx,1.4,.36), new THREE.Vector3(.14+dx,1.62,.36), .016, tickMat)); });
+    // "Forwarded many times" tag
+    const tag = new THREE.Mesh(new THREE.PlaneGeometry(.7,.16), new THREE.MeshStandardMaterial({
+      map: canvasTexture(256,64,(c,w,h) => { c.fillStyle='#fff'; c.fillRect(0,0,w,h); c.fillStyle='#667'; c.font='italic 24px sans-serif';
+        c.textAlign='center'; c.fillText('↪ Forwarded many times', w/2, 42); }), roughness:.8 }));
+    tag.position.set(0,1.02,.2); g.add(tag);
+    return g; },
+  queue(){ const g = new THREE.Group();                                   // the ATM queue: ropes, no ATM
+    const postGeo = new THREE.CylinderGeometry(.03,.04,.95,8);
+    const pts = [[-.9,0,.6],[-.3,0,.7],[.3,0,.55],[.9,0,.6]];
+    pts.forEach(([x,,z]) => { const p = new THREE.Mesh(postGeo, MAT.iron); p.position.set(x,.48,z); g.add(p);
+      const b = new THREE.Mesh(new THREE.CylinderGeometry(.14,.16,.04,10), MAT.iron); b.position.set(x,.02,z); g.add(b); });
+    const rope = new THREE.MeshStandardMaterial({ color:'#a2233b', roughness:.9 });
+    for (let i = 0; i < pts.length-1; i++){
+      const a = new THREE.Vector3(pts[i][0], .9, pts[i][2]), b = new THREE.Vector3(pts[i+1][0], .9, pts[i+1][2]);
+      const mid = a.clone().lerp(b,.5); mid.y -= .16;
+      g.add(rod(a, mid, .02, rope)); g.add(rod(mid, b, .02, rope)); }
+    // the machine at the end: a grey box with a black screen and one line on it
+    const atm = new THREE.Mesh(new THREE.BoxGeometry(.7,1.4,.5), MAT.slate); atm.position.set(1.5,.7,.6); g.add(atm);
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(.42,.28), new THREE.MeshBasicMaterial({
+      map: canvasTexture(256,170,(c,w,h) => { c.fillStyle='#0a1a12'; c.fillRect(0,0,w,h); c.fillStyle='#4cff7a'; c.font='700 30px monospace';
+        c.textAlign='center'; c.fillText('OUT OF CASH', w/2, 76); c.font='20px monospace'; c.fillText('try 2018', w/2, 120); }), toneMapped:false }));
+    screen.position.set(1.5,1.02,.86); g.add(screen);
+    // one shoe left behind
+    const shoe = new THREE.Mesh(new THREE.BoxGeometry(.24,.08,.1), MAT.darkWood); shoe.position.set(-.5,.04,.35); shoe.rotation.y = .5; g.add(shoe);
+    return g; },
+  scissors(){ const g = new THREE.Group();                                // ribbon-cutting: the ribbon is cut, the thing behind it isn't built
+    const cushion = new THREE.Mesh(new THREE.CylinderGeometry(.5,.55,.2,14),
+      new THREE.MeshStandardMaterial({ color:'#6E2138', roughness:.7 })); cushion.position.y = .62; g.add(cushion);
+    const ped = new THREE.Mesh(new THREE.CylinderGeometry(.35,.45,.55,12), MAT.marble); ped.position.y = .27; g.add(ped);
+    // golden scissors, open, oversized
+    const blade = new THREE.MeshStandardMaterial({ color:'#d9b24a', metalness:.85, roughness:.3 });
+    [-.35,.35].forEach(a => { const b = new THREE.Mesh(new THREE.BoxGeometry(.06,.9,.02), blade);
+      b.position.set(0,1.05,0); b.rotation.z = a; g.add(b);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(.11,.02,8,16), blade); ring.position.set(Math.sin(a)*.5, .62, 0); ring.rotation.y = 0; g.add(ring); });
+    // the ribbon: two saffron halves fluttering off either side
+    const rib = new THREE.MeshStandardMaterial({ color:'#FF9933', roughness:.8, side: THREE.DoubleSide });
+    [-1,1].forEach(sg => { const r = new THREE.Mesh(new THREE.PlaneGeometry(.9,.12,8,1), rib);
+      const pos = r.geometry.attributes.position; for (let i=0;i<pos.count;i++){ const x=pos.getX(i); pos.setZ(i, Math.sin(x*6)*.06); }
+      pos.needsUpdate = true; r.position.set(sg*.75,1.05,0); r.rotation.z = sg*.35; g.add(r); });
+    // behind the pedestal: a "PROJECT SITE" board and one brick
+    const board = new THREE.Mesh(new THREE.PlaneGeometry(.9,.5), new THREE.MeshStandardMaterial({
+      map: canvasTexture(256,142,(c,w,h) => { c.fillStyle='#e9e4da'; c.fillRect(0,0,w,h); c.strokeStyle='#c0392b'; c.lineWidth=8; c.strokeRect(6,6,w-12,h-12);
+        c.fillStyle='#141414'; c.font='700 30px Georgia'; c.textAlign='center'; c.fillText('PROJECT SITE', w/2, 62);
+        c.font='18px monospace'; c.fillStyle='#4a4a4a'; c.fillText('completion: TBD', w/2, 104); }), roughness:.85, side: THREE.DoubleSide }));
+    board.position.set(0,1.1,-.9); g.add(board);
+    g.add(rod(new THREE.Vector3(0,.0,-.9), new THREE.Vector3(0,.85,-.9), .02, MAT.iron));
+    const brick = new THREE.Mesh(new THREE.BoxGeometry(.24,.12,.12), new THREE.MeshStandardMaterial({ color:'#9a4a32', roughness:.9 }));
+    brick.position.set(.5,.06,-.75); brick.rotation.y = .4; g.add(brick);
+    return g; },
+  cabinet(){ const g = new THREE.Group();                                 // the file cabinet: every drawer open, every drawer empty
+    const body = new THREE.Mesh(new THREE.BoxGeometry(.7,1.5,.55), MAT.slate); body.position.y = .75; g.add(body);
+    for (let i = 0; i < 4; i++){
+      const y = .25 + i*.36, out = [.28,.42,.18,.36][i];
+      const drawer = new THREE.Mesh(new THREE.BoxGeometry(.62,.3,.5), new THREE.MeshStandardMaterial({ color:'#7c8288', roughness:.7, metalness:.3 }));
+      drawer.position.set(0,y,.02+out); g.add(drawer);
+      const handle = new THREE.Mesh(new THREE.BoxGeometry(.18,.03,.03), MAT.iron); handle.position.set(0,y,.28+out); g.add(handle);
+      const label = new THREE.Mesh(new THREE.PlaneGeometry(.22,.08), new THREE.MeshStandardMaterial({
+        map: canvasTexture(128,48,(c,w,h) => { c.fillStyle='#fff'; c.fillRect(0,0,w,h); c.fillStyle='#333'; c.font='700 22px monospace';
+          c.textAlign='center'; c.fillText(['RTI','AUDIT','MINUTES','REPLIES'][i], w/2, 33); }), roughness:.8 }));
+      label.position.set(0,y+.09,.275+out); g.add(label);
+    }
+    // a single moth
+    const moth = new THREE.Mesh(new THREE.PlaneGeometry(.08,.05), new THREE.MeshStandardMaterial({ color:'#a89f8c', side: THREE.DoubleSide }));
+    moth.position.set(.2,1.2,.6); moth.rotation.y = .6; g.add(moth);
+    return g; },
+  pothole(){ const g = new THREE.Group();                                 // the pothole with a traffic cone in it, and a garland on the cone
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(.5,.08,8,22), new THREE.MeshStandardMaterial({ color:'#3d3935', roughness:.95 }));
+    rim.rotation.x = Math.PI/2; rim.position.y = .02; g.add(rim);
+    const water = new THREE.Mesh(new THREE.CircleGeometry(.46,22), new THREE.MeshStandardMaterial({ color:'#3a4a56', roughness:.2, metalness:.4 }));
+    water.rotation.x = -Math.PI/2; water.position.y = .01; g.add(water);
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(.16,.55,10), new THREE.MeshStandardMaterial({ color:'#ff6a00', roughness:.7 }));
+    cone.position.set(0,.3,0); cone.rotation.z = .18; g.add(cone);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(.11,.13,.08,10), MAT.white); band.position.set(.03,.36,0); band.rotation.z = .18; g.add(band);
+    // marigold garland — because it was inaugurated
+    for (let i = 0; i < 10; i++){ const a = i*.63; const m = new THREE.Mesh(new THREE.SphereGeometry(.035,6,5),
+      new THREE.MeshStandardMaterial({ color: i%2 ? '#e8901f' : '#d4691b', roughness:.8 }));
+      m.position.set(Math.cos(a)*.16, .5 - Math.abs(Math.sin(a))*.06, Math.sin(a)*.16); g.add(m); }
+    // a "DRIVE SAFE" sign fallen face-up
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(.5,.3), new THREE.MeshStandardMaterial({
+      map: canvasTexture(200,120,(c,w,h) => { c.fillStyle='#f4efe0'; c.fillRect(0,0,w,h); c.fillStyle='#c0392b'; c.font='700 34px Georgia';
+        c.textAlign='center'; c.fillText('DRIVE SAFE', w/2, 72); }), roughness:.85, side: THREE.DoubleSide }));
+    sign.rotation.x = -Math.PI/2 + .1; sign.position.set(.75,.03,.3); sign.rotation.z = -.4; g.add(sign);
+    return g; },
+
   scrolls(){ const g = new THREE.Group();                                 // firmans, acts, charters
     const desk = new THREE.Mesh(new THREE.BoxGeometry(.9,.5,.55), MAT.darkWood); desk.position.y=.25; g.add(desk);
     const pm = new THREE.MeshStandardMaterial({ color:'#e4d6b0', roughness:.85 });

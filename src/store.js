@@ -15,8 +15,8 @@ let snap = {
   lightbox: null,                // station index or null
   timelineOpen: false,
   indexOpen: false,
-  ledgerOpen: false,             // the 2014–present accountability record
-  bhaktOpen: false,              // the "For Andhbhakts" satire page
+  // the "For Andhbhakts" satire page — it is the landing of the 2014→today walk
+  bhaktOpen: typeof location !== 'undefined' && new URLSearchParams(location.search).get('walk') === 'ledger',
   montage: { active: false, idx: 0 },
   explore: null,                 // { name, blurb } while circling a clicked element
   tourOn: false,
