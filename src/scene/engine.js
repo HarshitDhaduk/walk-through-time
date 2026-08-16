@@ -197,7 +197,6 @@ const _look = new THREE.Vector3(), _camP = new THREE.Vector3(), _aerial = new TH
       _orbit = new THREE.Vector3(), _flagLook = new THREE.Vector3(), _explore = new THREE.Vector3();
 let lastS = 0, walkPhase = 0;
 let orbitT0 = null, orbitA0 = 0;     // finale orbit entry anchor
-const _WATER_DEEP = new THREE.Color('#1c2630');
 const clock = new THREE.Clock();
 
 function tick(){
@@ -255,11 +254,8 @@ function tick(){
 
   const bobAmp = REDUCED ? 0
     : 0.02 * clamp(speed / 4, 0, 1) * (1 - g * .85) * (1 - state.finaleW);
-  const prevBob = Math.sin(walkPhase);
   walkPhase += dt * (2.2 + speed * .35);
   _camP.y = 1.7 + Math.sin(walkPhase) * bobAmp;
-  // a footfall: the bob passes its trough while actually walking
-  const bobTick = speed > .4 && prevBob < -.98 && Math.sin(walkPhase) >= -.98;
 
   pointAt(Math.min(sCam + 7, PATHLEN - 0.1), _look);
   const endLift = smooth(clamp((sCam - (SPAN - 25)) / 20, 0, 1));  // gaze rises to the flag
@@ -331,33 +327,6 @@ function tick(){
   }
   world.sky.position.copy(camera.position);       // the dome always surrounds the walker
   if (!REDUCED) world.clouds.rotation.y = state.time * .0045;     // slow drift
-  // the pothole water catches the sky: its tint follows the fog colour,
-  // and a slow shimmer keeps it reading as liquid rather than paint
-  const pw = world.potholeWater;
-  if (pw){
-    // the pools take the sky's colour; near ones are simulated every frame
-    pw.uniforms.uSky.value.copy(scene.fog.color);
-    pw.uniforms.uFog.value.copy(scene.fog.color);
-    pw.uniforms.uFogNear.value = scene.fog.near; pw.uniforms.uFogFar.value = scene.fog.far;
-    if (!REDUCED) try {
-      const N = pw.N, cx = camera.position.x, cz = camera.position.z;
-      let simmed = 0;
-      for (const p of pw.pools){
-        if (p.fill <= 0) continue;
-        const dx = p.mesh.position.x - cx, dz = p.mesh.position.z - cz, d2 = dx*dx + dz*dz;
-        if (d2 > 14 * 14 || simmed >= 8) continue;
-        simmed++;
-        // impulses: a footfall each time the head-bob phase crosses its trough, if the pool is under the walker
-        if (d2 < 2.4 * 2.4 && bobTick){ const u = .5 + (Math.random()-.5) * .5, v = .5 + (Math.random()-.5) * .5;
-          world.splash(p, u, v, .35 + Math.random() * .25, N); }
-        // a light drizzle from the smog: a small drop every few seconds per pool
-        p.drizzle -= dt; if (p.drizzle < 0){ p.drizzle = 2.5 + Math.random() * 4; world.splash(p, Math.random(), Math.random(), .07 + Math.random() * .08, N); }
-        // step the wave equation (twice for a stable, lively surface at 60 fps)
-        world.stepPool(p, dt, N); world.stepPool(p, dt, N);
-        p.energy *= .96;
-      }
-    } catch (err){ if (!pw._warned){ pw._warned = true; console.error('[pools] simulation error', err); } }
-  }
   // THE WATER TANK bursts as the walker comes up on it — a ~4 s sequence:
   // crack opens → tank drops and tilts, a stilt buckles → the wreck rises
   // across the road as rubble → the jet sheets out → the flood runs down
@@ -386,22 +355,6 @@ function tick(){
     rig.flood.material.opacity = floodT * .55;
     rig.flood.scale.y = .1 + floodT * 22;                         // the sheet runs ~22 m down the road
     rig.flood.position.z = rig.flood.scale.y / 2 + 2.5;          // runs down the road ahead, past the wreck
-    // fill the dry potholes: each opens after the flood reaches it — and the
-    // arriving water and falling debris kick their surfaces into motion
-    if (pw && pw.fillable.length){
-      pw.fillable.forEach(f => {
-        const k = smooth(clamp((floodT - f.delay * .8) / .25, 0, 1));
-        if (Math.abs(k - f.fill) < .002) return;
-        const opening = k > f.fill && f.fill < .05;
-        f.fill = k; f.mat.uniforms.uFill.value = k; f.mesh.visible = k > 0;
-        if (opening && !REDUCED){ world.splash(f, .5, .5, .9, pw.N); world.splash(f, .3, .7, .5, pw.N); }
-      });
-      // debris raining into the nearest pools while the wreck comes down
-      if (!REDUCED && rubbleT > .05 && rubbleT < .9 && Math.random() < .35){
-        const near = pw.pools.filter(p => p.fill > 0 && Math.abs(p.s - rig.s) < 12);
-        if (near.length){ const p = near[Math.floor(Math.random() * near.length)]; world.splash(p, Math.random(), Math.random(), .5 + Math.random() * .6, pw.N); }
-      }
-    }
   }
   world.sun.position.set(_camP.x + 18, 32, _camP.z + 12);
   world.sun.target.position.set(_camP.x, 0, _camP.z - 8);

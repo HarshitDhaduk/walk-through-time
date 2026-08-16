@@ -496,8 +496,8 @@ const PROPS = {
   pothole(){ const g = new THREE.Group();                                 // the pothole with a traffic cone in it, and a garland on the cone
     const rim = new THREE.Mesh(new THREE.TorusGeometry(.5,.08,8,22), new THREE.MeshStandardMaterial({ color:'#3d3935', roughness:.95 }));
     rim.rotation.x = Math.PI/2; rim.position.y = .02; g.add(rim);
-    const water = new THREE.Mesh(new THREE.CircleGeometry(.46,22), new THREE.MeshStandardMaterial({ color:'#3a4a56', roughness:.2, metalness:.4 }));
-    water.rotation.x = -Math.PI/2; water.position.y = .01; g.add(water);
+    const bottom = new THREE.Mesh(new THREE.CircleGeometry(.46,22), new THREE.MeshStandardMaterial({ color:'#26221f', roughness:1 }));
+    bottom.rotation.x = -Math.PI/2; bottom.position.y = .01; g.add(bottom);   // dry
     const cone = new THREE.Mesh(new THREE.ConeGeometry(.16,.55,10), new THREE.MeshStandardMaterial({ color:'#ff6a00', roughness:.7 }));
     cone.position.set(0,.3,0); cone.rotation.z = .18; g.add(cone);
     const band = new THREE.Mesh(new THREE.CylinderGeometry(.11,.13,.08,10), MAT.white); band.position.set(.03,.36,0); band.rotation.z = .18; g.add(band);
