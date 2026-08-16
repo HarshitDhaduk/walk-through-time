@@ -384,7 +384,46 @@ function buildPotholeWater(){
   });
   mesh.instanceMatrix.needsUpdate = true;
   scene.add(mesh);
-  potholeWater = { mesh, mat, n: items.length, fillable, dummy: d };
+
+  // running water along the whole road: a thin, translucent ribbon that
+  // follows the path a hair above the tarmac, hugging the low (right) side
+  // and the centre — with a scrolling ripple texture so it flows downhill,
+  // i.e. toward the walker, all the way from the plaza back to 2014
+  const flowTex = canvasTexture(128, 512, (c, w, h) => {
+    c.clearRect(0,0,w,h);
+    for (let i = 0; i < 90; i++){                                   // ripple streaks
+      const y = Math.random()*h, len = 20 + Math.random()*60, a = .12 + Math.random()*.25;
+      c.strokeStyle = `rgba(255,255,255,${a})`; c.lineWidth = 1 + Math.random()*1.5;
+      c.beginPath(); c.moveTo(Math.random()*w, y); c.lineTo(Math.random()*w, y + len); c.stroke();
+    }
+    const g2 = c.createLinearGradient(0,0,w,0);                       // fades to nothing at both banks
+    g2.addColorStop(0,'rgba(0,0,0,0)'); g2.addColorStop(.12,'rgba(0,0,0,.95)'); g2.addColorStop(.88,'rgba(0,0,0,.95)'); g2.addColorStop(1,'rgba(0,0,0,0)');
+    c.globalCompositeOperation = 'destination-in'; c.fillStyle = g2; c.fillRect(0,0,w,h);
+  });
+  flowTex.wrapS = THREE.ClampToEdgeWrapping; flowTex.wrapT = THREE.RepeatWrapping;
+  const buildRibbon = (fOff, width, alphaMul) => {
+    const rows = Math.ceil(END), pos = [], uv = [], idx = [];
+    for (let r = 0; r <= rows; r++){
+      const s = 2 + r; pointAt(s, _p); sideAt(s, _side); const w = walkWidth(s);
+      const f0 = fOff - width / w, f1 = fOff + width / w;               // width in road-fractions
+      pos.push(_p.x + _side.x * f0 * w/2, .028, _p.z + _side.z * f0 * w/2);
+      pos.push(_p.x + _side.x * f1 * w/2, .028, _p.z + _side.z * f1 * w/2);
+      uv.push(0, s / 6, 1, s / 6);
+    }
+    for (let r = 0; r < rows; r++){ const a = r*2; idx.push(a, a+2, a+1, a+1, a+2, a+3); }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx); g.computeVertexNormals();
+    const m = new THREE.MeshStandardMaterial({ map: flowTex, transparent: true, opacity: .72 * alphaMul, depthWrite: false,
+      color: '#c4d4e0', roughness: .08, metalness: .7, envMap: envTex, envMapIntensity: 1.6, side: THREE.DoubleSide });
+    const mesh2 = new THREE.Mesh(g, m); scene.add(mesh2); return mesh2;
+  };
+  // a broad sheet running down the right half of the road (the plates on that side sit
+  // in it, glowing through — the water is only 2 cm deep), a rivulet along the left kerb,
+  // and a trickle down the crown line
+  const flows = [ buildRibbon(-.5, 1.65, 1), buildRibbon(.86, .5, .8), buildRibbon(.02, .35, .55) ];
+  potholeWater = { mesh, mat, n: items.length, fillable, dummy: d, flows, flowTex };
 }
 function buildFloor(){
   const rows = Math.ceil(FLAG_S + 55), cols = 4;
@@ -763,7 +802,7 @@ function buildSatireWayside(){
   const sc = new THREE.Group();
   const s1 = sOf('cag-2022') ?? (S_BRIT + 6);
   pointAt(s1 - 4, _p); tangentAt(s1 - 4, _t); sideAt(s1 - 4, _side);
-  sc.position.copy(_p).addScaledVector(_side, (WALK_W/2 + 6));
+  sc.position.copy(_p).addScaledVector(_side, -(WALK_W/2 + 1.1));   // straddling the right kerb: half its cage on the road, the left lane stays open
   sc.rotation.y = Math.atan2(_t.x, _t.z);
   const poles = [];
   for (let x = -3; x <= 3; x += 1.5) for (let z = -2; z <= 2; z += 2){
@@ -792,7 +831,7 @@ function buildSatireWayside(){
     const T = new THREE.Group();
     pointAt(tankS, _p); tangentAt(tankS, _t); sideAt(tankS, _side);
     T.position.copy(_p); T.rotation.y = Math.atan2(_t.x, _t.z);
-    const sideOff = -(WALK_W/2 + 3.2);                     // right of the road, looking down it
+    const sideOff = (WALK_W/2 + 3.2);                      // LEFT of the road (the scaffolded building takes the right)
     const tankMat = new THREE.MeshStandardMaterial({ color:'#b9b1a4', roughness:.85 });
     const stiltMat = concrete;
     // four concrete stilts, a ring beam, the tank (cylinder + shallow domed lid), a ladder
@@ -810,31 +849,33 @@ function buildSatireWayside(){
       c.clearRect(0,0,w,h); c.fillStyle='rgba(20,20,20,.85)'; c.font='700 30px monospace'; c.textAlign='center'; c.fillText('JAL BOARD', w/2, 38);
       c.font='16px monospace'; c.fillText('cap. 50,000 L · est. 2019', w/2, 68); }), transparent:true, roughness:.9 }));
     stencil.position.set(0, 1.35, 2.11); tank.add(stencil);
-    for (let k = 0; k < 8; k++){ const rung = new THREE.Mesh(new THREE.BoxGeometry(.4,.04,.04), rustMat); rung.position.set(sideOff + 1.9, .8 + k*.85, 0); stilts.add(rung); }
+    for (let k = 0; k < 8; k++){ const rung = new THREE.Mesh(new THREE.BoxGeometry(.4,.04,.04), rustMat); rung.position.set(sideOff - 1.9, .8 + k*.85, 0); stilts.add(rung); }
     // the crack that opens on the tank's road-facing side, and the water it lets out
     const crack = new THREE.Mesh(new THREE.PlaneGeometry(.9, 1.6), new THREE.MeshBasicMaterial({ color:'#0b0b0c', transparent:true, opacity:0, side: THREE.DoubleSide }));
-    crack.position.set(1.6, 1.2, 1.3); crack.rotation.y = .9; crack.scale.set(.2, 1, 1); tank.add(crack);
+    crack.position.set(-1.6, 1.2, 1.3); crack.rotation.y = -.9; crack.scale.set(.2, 1, 1); tank.add(crack);
     const waterMat = new THREE.MeshStandardMaterial({ color:'#7fa4c0', roughness:.15, metalness:.4, transparent:true, opacity:0, side: THREE.DoubleSide });
     // the jet: a curved sheet from the crack, arcing down to the road
-    const jet = new THREE.Mesh(new THREE.CylinderGeometry(.18, .55, 6.5, 10, 1, true), waterMat); jet.position.set(sideOff + 1.4, 4.4, 1.2); jet.rotation.z = -.55; jet.rotation.x = -.25; jet.visible = false; T.add(jet);
+    const jet = new THREE.Mesh(new THREE.CylinderGeometry(.18, .55, 6.5, 10, 1, true), waterMat); jet.position.set(sideOff - 1.4, 4.4, 1.2); jet.rotation.z = .55; jet.rotation.x = -.25; jet.visible = false; T.add(jet);
     // the flood: a widening sheet of water down the road (grows along +z, i.e. ahead of the walker… the road runs -z locally, so we grow toward -z)
     const flood = new THREE.Mesh(new THREE.PlaneGeometry(WALK_W + 1.2, 1, 1, 1), waterMat.clone()); flood.material.opacity = 0;
     flood.rotation.x = -Math.PI/2; flood.position.set(0, .018, 0); flood.visible = false; T.add(flood);
     // the rubble wall across the road: chunks of concrete + rebar, risen from below when it falls
     const rubble = new THREE.Group(); rubble.position.set(0, -3.5, 4.5); T.add(rubble);    // lands 4.5 m past the tank (local +z is ahead), starting sunk under the tarmac
-    for (let k = 0; k < 16; k++){
-      const ch = new THREE.Mesh(new THREE.DodecahedronGeometry(.35 + Math.random()*.45, 0), k % 3 ? concrete : concreteDark);
-      ch.position.set((Math.random()-.5) * (WALK_W + 1), Math.random()*1.4, (Math.random()-.5)*2.4);
+    for (let k = 0; k < 22; k++){
+      // smaller chunks, thrown from the tank (left) clear across to the far kerb and beyond it
+      const ch = new THREE.Mesh(new THREE.DodecahedronGeometry(.16 + Math.random()*.26, 0), k % 3 ? concrete : concreteDark);
+      const across = sideOff * .6 - Math.random() * (WALK_W + 4.5);            // from under the tank … past the right edge
+      ch.position.set(across, Math.random()*.6, (Math.random()-.5)*3.2);
       ch.rotation.set(Math.random()*3, Math.random()*3, Math.random()*3); rubble.add(ch);
     }
-    const bigSlab = new THREE.Mesh(new THREE.BoxGeometry(3.2, .5, 2.2), concreteDark); bigSlab.position.set(-1.2, .8, 0); bigSlab.rotation.set(.35, .4, .5); rubble.add(bigSlab);
-    for (let k = 0; k < 10; k++){ const rb = new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,1.4,5), rustMat);
-      rb.position.set((Math.random()-.5)*(WALK_W), .9 + Math.random()*.6, (Math.random()-.5)*2); rb.rotation.set(Math.random()*2, 0, Math.random()*2); rubble.add(rb); }
+    const bigSlab = new THREE.Mesh(new THREE.BoxGeometry(2.2, .35, 1.4), concreteDark); bigSlab.position.set(-(WALK_W/2 + .8), .35, .2); bigSlab.rotation.set(.25, .4, .35); rubble.add(bigSlab);   // the tank wall, landed on the far kerb
+    for (let k = 0; k < 10; k++){ const rb = new THREE.Mesh(new THREE.CylinderGeometry(.015,.015,1.1,5), rustMat);
+      rb.position.set(sideOff * .5 - Math.random()*(WALK_W + 3), .35 + Math.random()*.4, (Math.random()-.5)*2.6); rb.rotation.set(Math.random()*2, 0, Math.random()*2); rubble.add(rb); }
     // a fallen ladder and a "DANGER · TANK UNSAFE" sign that was, of course, already there
     const warn = new THREE.Mesh(new THREE.PlaneGeometry(1.1,.7), new THREE.MeshStandardMaterial({ map: canvasTexture(220,140,(c,w,h) => {
       c.fillStyle='#e8b048'; c.fillRect(0,0,w,h); c.fillStyle='#141414'; c.font='700 26px Georgia'; c.textAlign='center'; c.fillText('DANGER', w/2, 48);
       c.font='700 20px Georgia'; c.fillText('TANK UNSAFE', w/2, 82); c.font='13px monospace'; c.fillStyle='#4a4a4a'; c.fillText('notice dated 2019', w/2, 118); }), roughness:.85, side: THREE.DoubleSide }));
-    warn.position.set(sideOff + 2.6, 1.6, 1.8); warn.rotation.y = -.5; T.add(warn);
+    warn.position.set(sideOff - 2.6, 1.6, 1.8); warn.rotation.y = Math.PI + .5;   // faces the walker approaching from +z T.add(warn);
     scene.add(T);
     tankRig = { group: T, tank, stilts, crack, jet, flood, rubble, s: tankS, t: 0, restH: 7.2,
       buckle: stilts.children.find(c => c.userData.buckle) };
@@ -843,7 +884,7 @@ function buildSatireWayside(){
   // 4c) BROKEN BRIDGES — a footbridge whose span has dropped at one end,
   //     and a road culvert bridge with its parapet gone and the deck sagging
   {
-    const s2 = (sOf('adani-2023') ?? (S_BRIT + 20)) - 5;
+    const s2 = (sOf('chandigarh-2024') ?? (S_BRIT + 34)) - 6;   // well past the tank
     const B = new THREE.Group();
     pointAt(s2, _p); tangentAt(s2, _t); sideAt(s2, _side);
     B.position.copy(_p); B.rotation.y = Math.atan2(_t.x, _t.z);

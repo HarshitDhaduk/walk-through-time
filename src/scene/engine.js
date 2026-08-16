@@ -335,6 +335,12 @@ function tick(){
     pw.mat.color.copy(scene.fog.color).lerp(_WATER_DEEP, .25);           // sky-coloured, a little deep
     pw.mat.roughness = REDUCED ? .06 : .04 + Math.sin(state.time * 1.7) * .025;   // the surface breathes
     pw.mat.emissive.copy(scene.fog.color).multiplyScalar(.16 + (REDUCED ? 0 : Math.sin(state.time * 2.3) * .04));
+    // the running water: ripples slide down the road toward the walker
+    if (pw.flows){
+      pw.flowTex.offset.y = REDUCED ? 0 : -((state.time * .35) % 1);   // toward the walker (v decreases toward 2014)
+      pw.flows.forEach(f => { f.material.color.copy(scene.fog.color).lerp(_WATER_DEEP, .1).multiplyScalar(1.15);
+        f.material.emissive.copy(scene.fog.color).multiplyScalar(.28); });
+    }
   }
   // THE WATER TANK bursts as the walker comes up on it — a ~4 s sequence:
   // crack opens → tank drops and tilts, a stilt buckles → the wreck rises
