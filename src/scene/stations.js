@@ -1801,10 +1801,13 @@ let finaleFx = null;     // celebration balloons, animated by the engine
 
 /* ---- the 2014→today ending: a dark day -----------------------------
    No flag. The pole is there — the flag is not; the halyard hangs.
-   Under smog: a plaza of loudspeakers turned to face the walker with
-   their cones sealed shut, a "SILENCE ZONE" gantry, CCTV on every
-   mast, a chained microphone stand, a burnt-out car, and on the marble
-   the citizens' own words — chalked, then hosed, then chalked again.
+   Under smog: a cracked Nyay ki Devi on a split plinth (one pan of her
+   scales on the ground), broken streetlights bent and dead around the
+   plaza, one down in glass, police barricades and a SECTION 144 sign,
+   a "SILENCE ZONE" gantry with two sealed loudspeakers, a chained
+   microphone stand, a burnt-out car, an overflowing bin, an open drain,
+   torn posters — and on the marble the citizens' own words, chalked,
+   hosed, and chalked again.
    The camera still circles: there is simply nothing raised at the
    centre to salute. The montage still plays — every plate had papers. */
 function buildDarkFinale(){
@@ -1833,22 +1836,103 @@ function buildDarkFinale(){
       c.font='16px monospace'; c.fillStyle='rgba(180,160,130,.6)'; c.fillText('(under revision)', w/2, 96); }), roughness:.8 }));
   plaque.position.set(0, .95, 1.3); plaque.rotation.x = -.35; g.add(plaque);
 
-  // ring of loudspeakers on masts, cones turned toward the walker, sealed with plates
+  // ---- Nyay ki Devi, cracked: blindfolded Justice on a split plinth, one
+  //      pan of the scales gone, the sword point-down, the figure tilted ----
+  const stone = new THREE.MeshStandardMaterial({ color:'#b9b1a4', roughness:.92 });
+  const stoneD = new THREE.MeshStandardMaterial({ color:'#7c756e', roughness:1 });
+  const devi = new THREE.Group(); devi.position.set(-5.2, 0, -5.4); devi.rotation.y = .55; g.add(devi);
+  g.userData.devi = devi;
+  const plinthA = new THREE.Mesh(new THREE.BoxGeometry(1.4, .9, 1.4), stone); plinthA.position.set(-.06, .45, 0); plinthA.rotation.z = .03; devi.add(plinthA);
+  const plinthB = new THREE.Mesh(new THREE.BoxGeometry(.5, .9, 1.4), stoneD); plinthB.position.set(.78, .38, .1); plinthB.rotation.z = -.16; devi.add(plinthB); // the sheared-off slab
+  const fig = new THREE.Group(); fig.position.set(-.05, .9, 0); fig.rotation.z = .07; devi.add(fig);
+  const robe = new THREE.Mesh(new THREE.CylinderGeometry(.22, .42, 1.5, 12), stone); robe.position.y = .75; fig.add(robe);
+  const torso = new THREE.Mesh(new THREE.CylinderGeometry(.24, .22, .55, 10), stone); torso.position.y = 1.72; fig.add(torso);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.17, 12, 10), stone); head.position.y = 2.15; fig.add(head);
+  const blindfold = new THREE.Mesh(new THREE.CylinderGeometry(.175, .175, .07, 12), stoneD); blindfold.position.set(0, 2.17, 0); fig.add(blindfold);
+  // arms: left holds the scales up, right holds the sword - point down, tip broken
+  const armL = new THREE.Mesh(new THREE.CylinderGeometry(.06, .07, .7, 8), stone); armL.position.set(-.34, 1.85, .05); armL.rotation.z = 1.05; fig.add(armL);
+  const armR = new THREE.Mesh(new THREE.CylinderGeometry(.06, .07, .6, 8), stone); armR.position.set(.3, 1.55, .05); armR.rotation.z = -.35; fig.add(armR);
+  const sbeam = new THREE.Mesh(new THREE.CylinderGeometry(.02, .02, .8, 6), stoneD); sbeam.position.set(-.62, 2.05, .05); sbeam.rotation.z = Math.PI/2 + .35; fig.add(sbeam);
+  const chainL = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .32, 4), stoneD); chainL.position.set(-.98, 1.98, .05); fig.add(chainL);
+  const panL = new THREE.Mesh(new THREE.CylinderGeometry(.16, .12, .05, 12), stoneD); panL.position.set(-.98, 1.8, .05); fig.add(panL);
+  // the other pan is on the ground, and its chain hangs empty
+  const chainR = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .2, 4), stoneD); chainR.position.set(-.3, 2.2, .05); chainR.rotation.z = .5; fig.add(chainR);
+  const panFallen = new THREE.Mesh(new THREE.CylinderGeometry(.16, .12, .05, 12), stoneD); panFallen.position.set(-1.6, .04, .6); panFallen.rotation.set(.1, .3, .25); devi.add(panFallen);
+  const sword = new THREE.Mesh(new THREE.BoxGeometry(.05, 1.0, .015), stoneD); sword.position.set(.5, .95, .1); sword.rotation.z = -.15; fig.add(sword);   // point-down, snapped short
+  // cracks across the figure: dark seams
+  [[0,1.3,.4,.6],[-.1,1.9,-.5,.35],[.15,.6,.9,.5]].forEach(([x,y,rz,len]) => { const cr = new THREE.Mesh(new THREE.BoxGeometry(.012, len, .01), dark);
+    cr.position.set(x, y, .23); cr.rotation.z = rz; fig.add(cr); });
+  // the pedestal's tablet: SATYAMEVA JAYATE with two letters fallen off
+  const tab = new THREE.Mesh(new THREE.PlaneGeometry(1.0, .3), new THREE.MeshStandardMaterial({ map: canvasTexture(256,76,(c,w,h) => {
+    c.fillStyle='#8f877c'; c.fillRect(0,0,w,h); c.fillStyle='#2e2a25'; c.font='700 26px Georgia'; c.textAlign='center'; c.fillText('SATYAMEVA  JAYATE', w/2, 50);
+    c.fillStyle='#8f877c'; c.fillRect(74, 22, 20, 36); c.fillRect(196, 22, 22, 36); }), roughness:.9 }));
+  tab.position.set(0, .5, .72); devi.add(tab);
+
+  // ---- broken streetlights around the plaza (instead of the mast ring):
+  //      bent, dead, one lying across the ground with its head shattered ----
+  const poleGeo = new THREE.CylinderGeometry(.06,.09,5.2,8);
+  const armGeo = new THREE.CylinderGeometry(.04,.04,1.4,6); armGeo.rotateZ(Math.PI/2); armGeo.translate(-.6,0,0);
+  const headGeo = new THREE.BoxGeometry(.5,.14,.22);
+  const lamps = [[6.4,-1.5,.0,.12],[7.0,3.2,-.4,.0],[-6.8,2.6,.3,-.18],[-7.2,-1.8,.0,.28],[2.5,-7.4,.5,.05],[-2.8,-7.6,-.2,.0]];
+  lamps.forEach(([x,z,yaw,lean], i) => {
+    const L = new THREE.Group(); L.position.set(x, 0, z); L.rotation.set(0, yaw, lean); g.add(L);
+    const pole = new THREE.Mesh(poleGeo, iron); pole.position.y = 2.6; L.add(pole);
+    const arm = new THREE.Mesh(armGeo, iron); arm.position.set(0, 5.1, 0); L.add(arm);
+    const hd = new THREE.Mesh(headGeo, iron); hd.position.set(-1.25, 5.05, 0); hd.rotation.z = (i % 2) ? .6 : -.15; L.add(hd);   // heads knocked askew
+    if (i % 3 === 0){ const pane = new THREE.Mesh(new THREE.BoxGeometry(.42,.06,.18), dark); pane.position.set(-1.25, 4.96, 0); pane.rotation.z = hd.rotation.z; L.add(pane); }
+    // wiring hanging out of the base door
+    const wire = new THREE.Mesh(new THREE.TorusGeometry(.12,.012,6,10, Math.PI*1.4), rust); wire.position.set(.1, .5, .1); wire.rotation.y = 1; L.add(wire);
+  });
+  // one down completely: pole across the ground, head shattered into glass shards
+  const down = new THREE.Group(); down.position.set(4.6, 0, 5.4); down.rotation.y = -.7; g.add(down);
+  const stub = new THREE.Mesh(new THREE.CylinderGeometry(.08,.09,.7,8), iron); stub.position.y = .35; stub.rotation.z = .3; down.add(stub);
+  const fallenPole = new THREE.Mesh(poleGeo, iron); fallenPole.position.set(2.5, .1, .3); fallenPole.rotation.z = Math.PI/2 - .06; down.add(fallenPole);
+  const fhead = new THREE.Mesh(headGeo, iron); fhead.position.set(5.5, .12, .5); fhead.rotation.set(0, .3, .5); down.add(fhead);
+  for (let k = 0; k < 9; k++){ const sh = new THREE.Mesh(new THREE.PlaneGeometry(.08 + Math.random()*.1, .06 + Math.random()*.08),
+    new THREE.MeshStandardMaterial({ color:'#cfd8dc', roughness:.2, metalness:.3, side: THREE.DoubleSide }));
+    sh.position.set(5.2 + (Math.random()-.5)*1.4, .01, .5 + (Math.random()-.5)*1.2); sh.rotation.set(-Math.PI/2, 0, Math.random()*3); down.add(sh); }
+
+  // ---- police barricades: yellow-and-black, some knocked over, one row across ----
+  const barrY = new THREE.MeshStandardMaterial({ color:'#d9b53a', roughness:.8 });
+  const barrTex = canvasTexture(256,64,(c,w,h) => { c.fillStyle='#d9b53a'; c.fillRect(0,0,w,h);
+    c.fillStyle='#141414'; for (let x = -32; x < w; x += 64){ c.beginPath(); c.moveTo(x,0); c.lineTo(x+32,0); c.lineTo(x+64,h); c.lineTo(x+32,h); c.closePath(); c.fill(); }
+    c.fillStyle='rgba(255,255,255,.85)'; c.font='700 22px monospace'; c.textAlign='center'; c.fillText('POLICE', w/2, 40); });
+  const barrFace = new THREE.MeshStandardMaterial({ map: barrTex, roughness:.85 });
+  const barricade = (x, z, yaw, over) => {
+    const B = new THREE.Group(); B.position.set(x, 0, z); B.rotation.y = yaw; if (over) B.rotation.x = -1.35;
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(2.2, .5, .06), [barrY,barrY,barrY,barrY,barrFace,barrFace]); rail.position.y = over ? .35 : .95; B.add(rail);
+    [-.95, .95].forEach(lx => { const leg = new THREE.Mesh(new THREE.BoxGeometry(.06,1.15,.06), iron); leg.position.set(lx, .58, 0); B.add(leg);
+      const foot = new THREE.Mesh(new THREE.BoxGeometry(.06,.05,.6), iron); foot.position.set(lx, .03, 0); B.add(foot); });
+    g.add(B);
+  };
+  [[-3.4, 6.2, .1, false], [-1.0, 6.5, -.05, false], [1.5, 6.3, .12, true], [3.9, 6.6, .3, false],
+   [-6.0, 1.0, 1.4, false], [-6.3, -1.4, 1.6, true], [6.2, 1.2, 1.55, false]].forEach(([x,z,y,o]) => barricade(x, z, y, o));
+  // a rusted sign wired to one barricade
+  const rs = new THREE.Mesh(new THREE.PlaneGeometry(.9,.55), new THREE.MeshStandardMaterial({ map: canvasTexture(180,110,(c,w,h) => {
+    c.fillStyle='#e9e4da'; c.fillRect(0,0,w,h); c.fillStyle='#c0392b'; c.font='700 22px Georgia'; c.textAlign='center'; c.fillText('SECTION 144', w/2, 44);
+    c.font='14px monospace'; c.fillStyle='#4a4a4a'; c.fillText('assembly of >4 questions', w/2, 74); c.fillText('prohibited', w/2, 94);
+    c.fillStyle='rgba(120,70,30,.5)'; for (let i=0;i<40;i++) c.fillRect(Math.random()*w, Math.random()*h, 3, 3); }), roughness:.9, side: THREE.DoubleSide }));
+  rs.position.set(-1.0, 1.05, 6.55); g.add(rs);
+
+  // ---- more of the public realm: an overflowing bin, an open drain, torn posters ----
+  const bin = new THREE.Mesh(new THREE.CylinderGeometry(.32,.28,.9,12,1,true), new THREE.MeshStandardMaterial({ color:'#2f6b3a', roughness:.85, side: THREE.DoubleSide }));
+  bin.position.set(5.6, .45, -7.0); bin.rotation.z = .12; g.add(bin);
+  for (let k = 0; k < 14; k++){ const bag = new THREE.Mesh(new THREE.SphereGeometry(.09 + Math.random()*.08, 6, 5),
+    new THREE.MeshStandardMaterial({ color: ['#e9e4da','#141414','#3aa0e8','#8f877c'][k%4], roughness:.9 }));
+    const a = k * 1.3, r = k < 6 ? .18 : .5 + Math.random()*.6; bag.position.set(5.6 + Math.cos(a)*r, k < 6 ? .95 + (k%3)*.09 : .07, -7.0 + Math.sin(a)*r); g.add(bag); }
+  const drain = new THREE.Mesh(new THREE.BoxGeometry(1.4, .06, 1.0), dark); drain.position.set(-4.2, .0, 6.9); g.add(drain);
+  const drainRim = new THREE.Mesh(new THREE.BoxGeometry(1.5, .1, 1.1), stoneD); drainRim.position.set(-4.2, .0, 6.9); g.add(drainRim);
+  const lidOff = new THREE.Mesh(new THREE.BoxGeometry(1.35, .06, .95), stoneD); lidOff.position.set(-3.1, .05, 6.4); lidOff.rotation.set(0, .5, .06); g.add(lidOff);
+  const posterTex = canvasTexture(128,160,(c,w,h) => { c.fillStyle='#e0d8c8'; c.fillRect(0,0,w,h); c.fillStyle='#c0392b'; c.font='700 18px Georgia'; c.textAlign='center';
+    c.fillText('MEGA', w/2, 40); c.fillText('EVENT', w/2, 62); c.fillStyle='#141414'; c.font='11px monospace'; c.fillText('(postponed)', w/2, 90);
+    c.fillStyle='rgba(0,0,0,.35)'; c.beginPath(); c.moveTo(0,h); c.lineTo(0,h*.6); c.lineTo(w*.45,h); c.closePath(); c.fill(); });
+  [[-6.6, 3.9, .4],[6.9, -1.9, -.9]].forEach(([x,z,ry],i) => { const P = new THREE.Mesh(new THREE.PlaneGeometry(.7,.88), new THREE.MeshStandardMaterial({ map: posterTex, roughness:.9, side: THREE.DoubleSide }));
+    P.position.set(x, 1.6 + i*.3, z); P.rotation.set(0, ry, (i%2?.06:-.05)); g.add(P); });
+  // two sealed loudspeakers stay - on the gantry itself, pointed at the arriving walker
   const hornGeo = new THREE.ConeGeometry(.28,.6,12,1,true); hornGeo.rotateX(Math.PI/2);
   const sealGeo = new THREE.CircleGeometry(.29, 12);
-  for (let i = 0; i < 8; i++){
-    const a = i * Math.PI * 2 / 8 + Math.PI/8;
-    if (Math.abs(((a - Math.PI/2 + Math.PI) % (Math.PI*2)) - Math.PI) < .45) continue;   // the gateway stays open
-    const x = Math.cos(a) * 7.2, z = Math.sin(a) * 7.2;
-    const mast = new THREE.Mesh(new THREE.CylinderGeometry(.06,.08,4.6,8), iron); mast.position.set(x, 2.3, z); g.add(mast);
-    const horn = new THREE.Mesh(hornGeo, iron); horn.position.set(x, 4.5, z); horn.lookAt(0, 4.5, 0); g.add(horn);
-    const seal = new THREE.Mesh(sealGeo, dark); seal.position.copy(horn.position); seal.lookAt(0, 4.5, 0);
-    seal.translateZ(.31); g.add(seal);
-    // a camera on each mast, all pointed at the plaza's centre
-    const cam = new THREE.Mesh(new THREE.BoxGeometry(.18,.12,.3), dark); cam.position.set(x, 3.6, z); cam.lookAt(0, 1.6, 0); g.add(cam);
-    const led = new THREE.Mesh(new THREE.SphereGeometry(.02,6,5), new THREE.MeshBasicMaterial({ color:'#ff2020', toneMapped:false }));
-    led.position.copy(cam.position); led.lookAt(0,1.6,0); led.translateZ(.16); g.add(led);
-  }
+  [-1.6, 1.6].forEach(x => { const horn = new THREE.Mesh(hornGeo, iron); horn.position.set(x, 4.35, 8.6); horn.lookAt(x, 1.5, 14); g.add(horn);
+    const seal = new THREE.Mesh(sealGeo, dark); seal.position.copy(horn.position); seal.lookAt(x, 1.5, 14); seal.translateZ(.31); g.add(seal); });
   // the SILENCE ZONE gantry across the gateway the walker enters through
   const gTex = canvasTexture(512,96,(c,w,h) => { c.fillStyle='#141414'; c.fillRect(0,0,w,h); c.fillStyle='#ffd166'; c.font='700 44px Georgia'; c.textAlign='center';
     c.fillText('SILENCE ZONE', w/2, 62); c.font='16px monospace'; c.fillStyle='#b8ac9c'; c.fillText('questions strictly prohibited', w/2, 86); });
@@ -2082,7 +2166,10 @@ function buildStations(){
 
     // era-styled frame
     let frame;
-    if (st.prop === 'finale')      frame = { grp: buildFinale(), anchorY: 5.2 };
+    if (st.prop === 'finale'){     frame = { grp: buildFinale(), anchorY: 5.2 };
+      if (frame.grp.userData.devi) EXPLORABLES.push({ root: frame.grp.userData.devi, name: 'Nyay ki Devi',
+        blurb: 'Blindfolded, as she should be. One pan of the scales is on the ground; the sword points down; the plinth split. SATYAMEVA JAYATE — two letters have fallen off.' });
+    }
     else if (st.flashback)         frame = flashbackFrame(st);
     else if (st.era === 'mughal' || st.era === 'transition') frame = mughalFrame(st);
     else if (st.era === 'british') frame = britishFrame(st);
