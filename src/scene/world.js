@@ -337,24 +337,27 @@ function makePlazaTexture(){
   return cv;
 }
 
-/* standing water in the potholes: a glossy, slightly sunken disc sits
-   in each pothole of every 8 m road tile — it mirrors the smog sky and
-   the lamps, and the engine ripples it. Positions come straight from
-   the painted potholes' canvas coordinates (512-px tile ↔ 8 m × road) */
+/* standing water in the potholes — a real shallow-water simulation.
+   Each pool is its own small mesh with a 24×24 height field. Pools within
+   reach of the walker are stepped every frame with the damped 2-D wave
+   equation (h'' = c²∇²h − k·h'), driven by impulses: the walker's footfalls
+   nearby, debris landing from the tank burst, the flood arriving, and a
+   faint drizzle. A shader bumps the surface normal from the height field
+   so the sky reflection and the dark pothole bottom wobble with the waves.
+   Far pools rest flat and cost nothing. Positions come straight from the
+   painted potholes' canvas coordinates (512-px tile ↔ 8 m × road).      */
 let potholeWater = null;
 let tankRig = null;   // the water tank set-piece, animated by the engine
+const POOL_N = 24;                    // grid resolution per pool
 function buildPotholeWater(){
   const HOLES = [[160,250,40,26],[400,430,30,20],[80,470,22,14]];   // canvas x,y,rx,ry (see makeBrokenRoadTexture)
-  const geo = new THREE.CircleGeometry(1, 20);
   // a tiny sky-gradient environment so the water actually mirrors the smog
-  // above it (metal without an envMap reflects nothing and reads as tar)
   const envCanvas = document.createElement('canvas'); envCanvas.width = 32; envCanvas.height = 32;
   const ec = envCanvas.getContext('2d');
   const eg = ec.createLinearGradient(0, 0, 0, 32); eg.addColorStop(0, '#5a5048'); eg.addColorStop(.5, '#a08e78'); eg.addColorStop(1, '#3a3430');
   ec.fillStyle = eg; ec.fillRect(0, 0, 32, 32);
   const envTex = new THREE.CanvasTexture(envCanvas); envTex.mapping = THREE.EquirectangularReflectionMapping;
-  const mat = new THREE.MeshStandardMaterial({ color:'#c9d3dc', roughness:.05, metalness:.95,
-    envMap: envTex, envMapIntensity:1.6, transparent:true, opacity:.94 });
+
   const items = [];
   const END = FLAG_S - 34;
   for (let tile = 1; tile * 8 < END; tile++){
@@ -367,64 +370,122 @@ function buildPotholeWater(){
       items.push({ s, f: -f, rx: rx / 512 * w * 1.02, ry: ry / 512 * 8 * 1.02 });   // fills the hole to its rim
     });
   }
-  // the potholes downhill of the water tank start DRY — the burst fills them
   const TANK_S = sOf('cag-2022') != null ? sOf('cag-2022') - 7 : null;
-  const mesh = new THREE.InstancedMesh(geo, mat, items.length);
-  const d = new THREE.Object3D();
-  const fillable = [];
+
+  // shared plane geometry (unit disc-ish square; the shader clips to an ellipse)
+  const geo = new THREE.PlaneGeometry(2, 2, POOL_N - 1, POOL_N - 1);
+  const uniformsBase = {
+    uEnv:   { value: envTex },
+    uSky:   { value: new THREE.Color('#8a7c6a') },
+    uDeep:  { value: new THREE.Color('#1c2630') },
+    uFog:   { value: new THREE.Color('#8a7c6a') },
+    uFogNear: { value: 5 }, uFogFar: { value: 38 },
+  };
+  const vert = `
+    uniform sampler2D uH; uniform float uAmp;
+    varying vec2 vUv; varying vec3 vN; varying vec3 vW;
+    void main(){
+      vUv = uv;
+      float h = texture2D(uH, uv).r;
+      vec3 p = position; p.z += h * uAmp;               // plane's local z is world up after rotation
+      // normal from the height field's finite differences
+      float e = 1.0 / ${POOL_N}.0;
+      float hx = texture2D(uH, uv + vec2(e,0.)).r - texture2D(uH, uv - vec2(e,0.)).r;
+      float hy = texture2D(uH, uv + vec2(0.,e)).r - texture2D(uH, uv - vec2(0.,e)).r;
+      vec3 n = normalize(vec3(-hx * uAmp * 6.0, -hy * uAmp * 6.0, 1.0));
+      vN = normalize(normalMatrix * n);
+      vec4 wp = modelMatrix * vec4(p, 1.0); vW = wp.xyz;
+      gl_Position = projectionMatrix * viewMatrix * wp;
+    }`;
+  const frag = `
+    uniform sampler2D uEnv; uniform vec3 uSky, uDeep, uFog; uniform float uFogNear, uFogFar, uFill;
+    varying vec2 vUv; varying vec3 vN; varying vec3 vW;
+    void main(){
+      // clip to the pothole's ellipse, with a soft wet rim
+      vec2 c = vUv * 2.0 - 1.0; float r = length(c);
+      if (r > 1.0) discard;
+      float rim = smoothstep(1.0, 0.86, r);
+      vec3 V = normalize(cameraPosition - vW);
+      vec3 N = normalize(vN);
+      // Fresnel: grazing → mirror, looking down → see the dark bottom
+      float f = pow(1.0 - max(dot(N, V), 0.0), 3.0);
+      f = mix(0.08, 1.0, f);
+      // reflect the sky env (equirect lookup on the reflected ray)
+      vec3 R = reflect(-V, N);
+      vec2 eq = vec2(atan(R.z, R.x) / 6.2831853 + 0.5, asin(clamp(R.y, -1.0, 1.0)) / 3.1415926 + 0.5);
+      vec3 sky = texture2D(uEnv, eq).rgb * 0.9 + uSky * 0.35;
+      // the bottom: dark, refracted slightly by the waves (offset the rim shading)
+      vec3 bottom = uDeep * (0.85 + 0.3 * N.x + 0.2 * N.y);
+      vec3 col = mix(bottom, sky, f);
+      // sun glint where the normal lines up
+      vec3 L = normalize(vec3(0.45, 0.8, 0.35));
+      float spec = pow(max(dot(reflect(-L, N), V), 0.0), 140.0);
+      col += vec3(1.0, 0.95, 0.85) * spec * 0.9;
+      // distance fog, same as the scene's
+      float d = length(cameraPosition - vW);
+      float fg = smoothstep(uFogNear, uFogFar, d);
+      col = mix(col, uFog, fg);
+      gl_FragColor = vec4(col, (0.92 * rim) * uFill * (1.0 - fg * 0.6));
+    }`;
+
+  const pools = [];
   items.forEach((it, i) => {
     pointAt(it.s, _p); tangentAt(it.s, _t); sideAt(it.s, _side);
-    d.position.set(_p.x + _side.x * it.f * walkWidth(it.s)/2, .012, _p.z + _side.z * it.f * walkWidth(it.s)/2);
-    d.rotation.set(-Math.PI/2, 0, -Math.atan2(_t.x, _t.z));
-    const dry = TANK_S != null && it.s > TANK_S - 2 && it.s < TANK_S + 24;   // the flood zone
-    if (dry){ fillable.push({ i, pos: d.position.clone(), rot: d.rotation.clone(), rx: it.rx, ry: it.ry, delay: (it.s - TANK_S) / 24 });
-      d.scale.set(.001, .001, 1); }
-    else d.scale.set(it.rx, it.ry, 1);
-    d.updateMatrix(); mesh.setMatrixAt(i, d.matrix);
+    // per-pool height field: two ping-pong buffers + a DataTexture (R channel float)
+    const N = POOL_N;
+    const h0 = new Float32Array(N * N), h1 = new Float32Array(N * N);
+    const tex = new THREE.DataTexture(h0, N, N, THREE.RedFormat, THREE.FloatType);
+    tex.needsUpdate = true; tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearFilter;
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { ...THREE.UniformsUtils.clone(uniformsBase), uH: { value: tex }, uAmp: { value: 1.0 }, uFill: { value: 1.0 } },
+      vertexShader: vert, fragmentShader: frag, transparent: true, depthWrite: false });
+    // share the env & colour uniforms across pools by aliasing the objects
+    mat.uniforms.uEnv = uniformsBase.uEnv; mat.uniforms.uSky = uniformsBase.uSky; mat.uniforms.uDeep = uniformsBase.uDeep;
+    mat.uniforms.uFog = uniformsBase.uFog; mat.uniforms.uFogNear = uniformsBase.uFogNear; mat.uniforms.uFogFar = uniformsBase.uFogFar;
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(_p.x + _side.x * it.f * walkWidth(it.s)/2, .014, _p.z + _side.z * it.f * walkWidth(it.s)/2);
+    m.rotation.set(-Math.PI/2, 0, -Math.atan2(_t.x, _t.z));
+    m.scale.set(it.rx, it.ry, 1);
+    m.frustumCulled = true;
+    m.userData.dry = TANK_S != null && it.s > TANK_S - 2 && it.s < TANK_S + 24;   // the flood zone starts dry
+    if (m.userData.dry){ mat.uniforms.uFill.value = 0; m.visible = false; }
+    scene.add(m);
+    pools.push({ mesh: m, mat, tex, h: [h0, h1], cur: 0, s: it.s, rx: it.rx, ry: it.ry,
+      delay: TANK_S != null ? (it.s - TANK_S) / 24 : 0, fill: m.userData.dry ? 0 : 1, energy: 0, drizzle: Math.random() * 3 });
   });
-  mesh.instanceMatrix.needsUpdate = true;
-  scene.add(mesh);
-
-  // running water along the whole road: a thin, translucent ribbon that
-  // follows the path a hair above the tarmac, hugging the low (right) side
-  // and the centre — with a scrolling ripple texture so it flows downhill,
-  // i.e. toward the walker, all the way from the plaza back to 2014
-  const flowTex = canvasTexture(128, 512, (c, w, h) => {
-    c.clearRect(0,0,w,h);
-    for (let i = 0; i < 90; i++){                                   // ripple streaks
-      const y = Math.random()*h, len = 20 + Math.random()*60, a = .12 + Math.random()*.25;
-      c.strokeStyle = `rgba(255,255,255,${a})`; c.lineWidth = 1 + Math.random()*1.5;
-      c.beginPath(); c.moveTo(Math.random()*w, y); c.lineTo(Math.random()*w, y + len); c.stroke();
-    }
-    const g2 = c.createLinearGradient(0,0,w,0);                       // fades to nothing at both banks
-    g2.addColorStop(0,'rgba(0,0,0,0)'); g2.addColorStop(.12,'rgba(0,0,0,.95)'); g2.addColorStop(.88,'rgba(0,0,0,.95)'); g2.addColorStop(1,'rgba(0,0,0,0)');
-    c.globalCompositeOperation = 'destination-in'; c.fillStyle = g2; c.fillRect(0,0,w,h);
-  });
-  flowTex.wrapS = THREE.ClampToEdgeWrapping; flowTex.wrapT = THREE.RepeatWrapping;
-  const buildRibbon = (fOff, width, alphaMul) => {
-    const rows = Math.ceil(END), pos = [], uv = [], idx = [];
-    for (let r = 0; r <= rows; r++){
-      const s = 2 + r; pointAt(s, _p); sideAt(s, _side); const w = walkWidth(s);
-      const f0 = fOff - width / w, f1 = fOff + width / w;               // width in road-fractions
-      pos.push(_p.x + _side.x * f0 * w/2, .028, _p.z + _side.z * f0 * w/2);
-      pos.push(_p.x + _side.x * f1 * w/2, .028, _p.z + _side.z * f1 * w/2);
-      uv.push(0, s / 6, 1, s / 6);
-    }
-    for (let r = 0; r < rows; r++){ const a = r*2; idx.push(a, a+2, a+1, a+1, a+2, a+3); }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-    g.setIndex(idx); g.computeVertexNormals();
-    const m = new THREE.MeshStandardMaterial({ map: flowTex, transparent: true, opacity: .72 * alphaMul, depthWrite: false,
-      color: '#c4d4e0', roughness: .08, metalness: .7, envMap: envTex, envMapIntensity: 1.6, side: THREE.DoubleSide });
-    const mesh2 = new THREE.Mesh(g, m); scene.add(mesh2); return mesh2;
-  };
-  // a broad sheet running down the right half of the road (the plates on that side sit
-  // in it, glowing through — the water is only 2 cm deep), a rivulet along the left kerb,
-  // and a trickle down the crown line
-  const flows = [ buildRibbon(-.5, 1.65, 1), buildRibbon(.86, .5, .8), buildRibbon(.02, .35, .55) ];
-  potholeWater = { mesh, mat, n: items.length, fillable, dummy: d, flows, flowTex };
+  potholeWater = { pools, uniforms: uniformsBase, N: POOL_N,
+    fillable: pools.filter(p => p.mesh.userData.dry) };
 }
+/* one simulation step for a pool: damped wave equation on the grid.
+   c² and damping are tuned so a footfall settles in ~1.5 s.            */
+function stepPool(p, dt, N){
+  const a = p.h[p.cur], b = p.h[1 - p.cur];      // a = current, b = previous → b becomes next
+  const c2 = 0.32, damp = 0.985;
+  for (let y = 1; y < N - 1; y++){
+    const row = y * N;
+    for (let x = 1; x < N - 1; x++){
+      const i = row + x;
+      const lap = a[i - 1] + a[i + 1] + a[i - N] + a[i + N] - 4 * a[i];
+      // Verlet: next = 2a − prev + c²·lap, then damp
+      b[i] = (2 * a[i] - b[i] + c2 * lap) * damp;
+    }
+  }
+  // edges pinned to zero (the pothole's rim)
+  for (let x = 0; x < N; x++){ b[x] = 0; b[(N - 1) * N + x] = 0; }
+  for (let y = 0; y < N; y++){ b[y * N] = 0; b[y * N + N - 1] = 0; }
+  p.cur = 1 - p.cur;
+  p.tex.image.data = p.h[p.cur]; p.tex.needsUpdate = true;
+}
+/* drop energy into a pool at grid (u,v) ∈ [0,1] with a small radius */
+function splash(p, u, v, amp, N){
+  const cx = u * (N - 1), cy = v * (N - 1), h = p.h[p.cur];
+  for (let y = 1; y < N - 1; y++) for (let x = 1; x < N - 1; x++){
+    const d2 = (x - cx) * (x - cx) + (y - cy) * (y - cy);
+    if (d2 < 9) h[y * N + x] += amp * Math.exp(-d2 / 3);
+  }
+  p.energy = Math.max(p.energy, Math.abs(amp)) + 0.6;
+}
+
 function buildFloor(){
   const rows = Math.ceil(FLAG_S + 55), cols = 4;
   const pos = [], col = [], idx = [], nrm = [], uv = [];
@@ -1041,5 +1102,6 @@ function updateParticles(time){
   return { hemi, sun, pool, sky, sunDisc, clouds, applyEnv, buildFloor, buildArchitecture,
            buildParticles, updateParticles, walkWidth,
            get potholeWater(){ return potholeWater; },
-           get tankRig(){ return tankRig; } };
+           get tankRig(){ return tankRig; },
+           stepPool, splash };
 }
