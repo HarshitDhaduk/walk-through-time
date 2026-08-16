@@ -336,6 +336,48 @@ function tick(){
     pw.mat.roughness = REDUCED ? .06 : .04 + Math.sin(state.time * 1.7) * .025;   // the surface breathes
     pw.mat.emissive.copy(scene.fog.color).multiplyScalar(.16 + (REDUCED ? 0 : Math.sin(state.time * 2.3) * .04));
   }
+  // THE WATER TANK bursts as the walker comes up on it — a ~4 s sequence:
+  // crack opens → tank drops and tilts, a stilt buckles → the wreck rises
+  // across the road as rubble → the jet sheets out → the flood runs down
+  // the tarmac and the dry potholes downhill fill, nearest first.
+  const rig = world.tankRig;
+  if (rig){
+    if (rig.t < 1 && sCam > rig.s - 12) rig.t = Math.min(1, rig.t + dt / (REDUCED ? .01 : 4.2));   // fires as the tank comes into view
+    const t = rig.t, e = smooth(clamp(t, 0, 1));
+    const crackT = smooth(clamp(t / .18, 0, 1));                 // 0–18%: the crack opens
+    const dropT  = smooth(clamp((t - .12) / .38, 0, 1));         // 12–50%: the tank comes down
+    const rubbleT= smooth(clamp((t - .30) / .35, 0, 1));         // 30–65%: rubble across the road
+    const jetT   = clamp((t - .15) / .25, 0, 1);                 // 15–40%: the jet
+    const floodT = smooth(clamp((t - .35) / .65, 0, 1));         // 35–100%: the flood + potholes
+    rig.crack.material.opacity = crackT * .95; rig.crack.scale.x = .2 + crackT * 1.4;
+    rig.tank.position.y = rig.restH - dropT * 6.4;
+    rig.tank.rotation.z = -dropT * .95; rig.tank.rotation.x = dropT * .3;
+    rig.tank.position.x += 0;                                     // stays over its stilts, then falls road-ward:
+    rig.tank.position.z = dropT * 1.6;                            // falls road-ward, ahead
+    if (rig.buckle){ rig.buckle.rotation.z = dropT * .8; rig.buckle.position.y = 3.5 - dropT * 1.2; }
+    rig.rubble.position.y = -3.5 + rubbleT * 3.55;
+    rig.rubble.rotation.y = rubbleT * .25;
+    rig.jet.visible = jetT > 0 && t < .95;
+    rig.jet.material.opacity = jetT * (1 - clamp((t - .7) / .25, 0, 1)) * .75;
+    rig.jet.scale.y = .2 + jetT * .8;
+    rig.flood.visible = floodT > 0;
+    rig.flood.material.opacity = floodT * .55;
+    rig.flood.scale.y = .1 + floodT * 22;                         // the sheet runs ~22 m down the road
+    rig.flood.position.z = rig.flood.scale.y / 2 + 2.5;          // runs down the road ahead, past the wreck
+    // fill the dry potholes: each opens after the flood reaches it
+    if (pw && pw.fillable.length){
+      let dirty = false;
+      pw.fillable.forEach(f => {
+        const k = smooth(clamp((floodT - f.delay * .8) / .25, 0, 1));
+        if (Math.abs(k - (f.k || 0)) < .002) return;
+        f.k = k; dirty = true;
+        pw.dummy.position.copy(f.pos); pw.dummy.rotation.copy(f.rot);
+        pw.dummy.scale.set(Math.max(.001, f.rx * k), Math.max(.001, f.ry * k), 1);
+        pw.dummy.updateMatrix(); pw.mesh.setMatrixAt(f.i, pw.dummy.matrix);
+      });
+      if (dirty) pw.mesh.instanceMatrix.needsUpdate = true;
+    }
+  }
   world.sun.position.set(_camP.x + 18, 32, _camP.z + 12);
   world.sun.target.position.set(_camP.x, 0, _camP.z - 8);
   world.sunDisc.position.set(_camP.x + 135, 205, _camP.z + 90);   // the visible sun, same bearing
@@ -574,6 +616,7 @@ function goHome(){
   scrollTo(0, 0);
   // in the 2014→today walk, home is the "For Andhbhakts" page
   const inLedger = new URLSearchParams(location.search).get('walk') === 'ledger';
+  if (world.tankRig) world.tankRig.t = 0;      // the tank stands again for the next walk
   store.set({ started: false, bhaktOpen: inLedger });
 }
 
