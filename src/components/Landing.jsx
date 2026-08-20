@@ -87,10 +87,10 @@ export default function Landing(){
   if (IS_LEDGER) return null;
 
   const jumpIdx = hashIdx >= 0 ? hashIdx : (resume ? resume.idx : -1);
-  const jumpS   = hashIdx >= 0 ? STATION_S[hashIdx] : (resume ? resume.s : null);
+  const jumpS   = hashIdx >= 0 ? Math.max(0, STATION_S[hashIdx] - 5) : (resume ? resume.s : null);
   const jumpTag = hashIdx >= 0 ? '→ Begin at' : '↪ Resume at';
   const begin = s => { if (ready) engine.begin(s == null ? null : s); };
-  const beginAtStation = i => begin(STATION_S[i]);
+  const beginAtStation = i => begin(Math.max(0, STATION_S[i] - 5));   // arrive just before the plate, not on it
   const cur = lb >= 0 ? PLATES[lb] : null;
 
   // one corridor at a time: the chosen era's page replaces the previous one

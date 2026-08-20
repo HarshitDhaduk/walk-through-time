@@ -246,10 +246,11 @@
     background:repeating-conic-gradient(from 0deg,rgba(38,53,110,.085) 0deg 7.5deg,transparent 7.5deg 15deg);
     -webkit-mask-image:radial-gradient(circle,transparent 22%,#000 40%,transparent 70%);
     mask-image:radial-gradient(circle,transparent 22%,#000 40%,transparent 70%);
-    animation:chakraspin 90s linear infinite reverse}
+    animation:glraysspin 90s linear infinite reverse}
   .gl-chakra{position:absolute;left:50%;top:50%;width:64%;height:64%;transform:translate(-50%,-50%);color:var(--gl-navy);opacity:.13;
     animation:chakraspin 40s linear infinite}
   @keyframes chakraspin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+  @keyframes glraysspin{from{transform:rotate(0)}to{transform:rotate(360deg)}}   /* rays have no translate base — spinning them with chakraspin shifted the disc and drew a second chakra */
   .gl-hero-grid{position:relative;padding-top:80px;padding-bottom:96px;display:grid;
     grid-template-columns:repeat(auto-fit,minmax(min(410px,100%),1fr));gap:60px;align-items:center}
   .gl-hero h1{font-size:clamp(38px,5.4vw,66px);line-height:1.03;letter-spacing:-.01em;margin-top:22px}

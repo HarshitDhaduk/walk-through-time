@@ -105,7 +105,7 @@ export default function Bhakt(){
   // walk entry: in the ledger walk we start the engine directly; from the Record we cross over
   const walkTo = (id) => {
     if (IN_LEDGER_WALK){ store.set({ bhaktOpen: false }); const i = TIMELINE.findIndex(t => t.id === id);
-      engine.begin(i >= 0 ? STATION_S[i] : null); }
+      engine.begin(i >= 0 ? Math.max(0, STATION_S[i] - 5) : null); }   // land before the plate
     else location.href = LEDGER_WALK_URL + (id ? '#' + id : '');
   };
   const walkLabel = IN_LEDGER_WALK ? (ready ? 'Take the Pothole Yatra' : (load.msg || 'Loading the potholes…')) : 'Take the Pothole Yatra';
