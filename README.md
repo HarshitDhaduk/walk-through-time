@@ -108,10 +108,11 @@ nothing re-renders at 60 fps.
 - **☰ Index** (top left) — floor plan of all 45 stations, grouped by era; click to jump
 - **Progress bar** — ‹ › station steppers plus clickable year markers
   (1526 · 1600 · 1707 · 1757 · 1857 · 1947)
-- **Ambience toggle** (top right) — plays the walk's soundtrack if an audio file has been
-  dropped into `public/audio/` (see the README there: looped on the free walk, and the
-  guided tour is paced to end exactly with the song), otherwise synthesized ambience.
-  Off by default; no audio ships in the repo.
+- **Ambience toggle** (top right) — the walk's soundtrack: a local file from
+  `public/audio/` if present, else the song's official YouTube embed in a small visible
+  dock (see `public/audio/README.md`), else synthesized ambience. Looped on the free
+  walk; the guided tour is paced to end exactly with the song. Off by default; no audio
+  ships in the repo.
 
 ## Deep links & resume
 

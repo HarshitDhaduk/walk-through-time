@@ -41,6 +41,15 @@
     color:var(--ink);border:1px solid rgba(255,255,255,.25);border-radius:999px;
     padding:8px 14px;font-size:13px;cursor:pointer;backdrop-filter:blur(6px)}
   #tour-toggle[aria-pressed="true"]{border-color:var(--saffron);color:#ffd9a6}
+
+  /* the soundtrack's YouTube dock — the official embed must stay visible
+     while it plays (YouTube API terms: at least 200×200 px, controls on) */
+  #yt-dock{position:fixed;right:16px;bottom:58px;z-index:26;width:320px;height:200px;
+    border-radius:10px;overflow:hidden;background:#000;display:none;
+    border:1px solid rgba(255,255,255,.18);box-shadow:0 12px 40px rgba(0,0,0,.55)}
+  #yt-dock.on{display:block}
+  #yt-dock iframe{width:100%;height:100%;display:block;border:0}
+  @media (max-width:640px){#yt-dock{width:200px;height:200px;right:10px;bottom:72px}}
   #year-readout{margin-right:230px}
 
   /* station index (museum floor plan) */

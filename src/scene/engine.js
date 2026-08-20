@@ -9,6 +9,7 @@ import { createWorld } from './world.js';
 import { createStations } from './stations.js';
 import { ambience } from '../audio/ambience.js';
 import { track } from '../audio/track.js';
+import { yt } from '../audio/yt.js';
 import { store } from '../store.js';
 import { uiRefs } from '../bridge.js';
 
@@ -51,17 +52,24 @@ function stepStation(dir){
 
 function openLightbox(st){ store.set({ lightbox: TIMELINE.indexOf(st) }); }
 
-/* Ambience button: the walk's soundtrack when a file is present in
-   public/audio/ (looping on the free walk), else the synth ambience. */
-track.onstop = () => store.set({ audioOn: false });   // the song ran out (end of a tour)
+/* Ambience button: the walk's soundtrack — a local file in public/audio/
+   if one is present, else the official YouTube embed (visible dock while
+   it plays), else the synth ambience. Same behaviour either way: looping
+   on the free walk, matched to the tour's runtime on the guided tour. */
+const music = () => track.ok ? track : (yt.ok ? yt : null);
+track.onstop = yt.onstop = () => store.set({ audioOn: false });   // the song ran out (end of a tour)
 function toggleAudio(){
-  track.init();
+  track.init(); yt.init();
+  const m = music();
   let on;
-  if (track.ok){
-    if (track.playing()){ track.stop(); on = false; }
+  if (m){
+    // our own on/off is the truth, not the player's state: an embed the
+    // browser paused (autoplay policy, or the dock's own controls) must
+    // still turn OFF on the next click rather than restart
+    if (store.get().audioOn){ m.stop(); on = false; }
     else {
-      on = track.play(tour.on);          // during a tour, start from the top…
-      track.loop = !tour.on;             // …and let it end with the tour; else repeat
+      on = m.play(tour.on);              // during a tour, start from the top…
+      m.loop = !tour.on;                 // …and let it end with the tour; else repeat
       if (on && tour.on) paceTourToTrack();
     }
   } else on = ambience.toggle();
@@ -101,20 +109,22 @@ const tour = { on: false, dwellUntil: 0, lastDwell: -1, releaseAt: 0, pace: 1 };
    remaining time at pace 1 is walking (3.4 m/s) plus the dwells ahead,
    and both scale by 1/pace, so pace = t₁ / song length.               */
 function paceTourToTrack(){
-  if (!track.ok || !sta) return;
+  const m = music();
+  if (!m || !sta) return;
   const sNow = state.progress * SPAN;
   let t1 = Math.max(0, SPAN - sNow) / 3.4;
   for (const stn of sta.stations) if (stn.s > sNow + .8) t1 += stn.viewPos ? 5.4 : 2.2;
-  tour.pace = clamp(t1 / Math.max(track.playLen, 30), .4, 4);
+  tour.pace = clamp(t1 / Math.max(m.playLen, 30), .4, 4);
 }
 function setTour(on){
   if (tour.on === on) return;
   tour.on = on; tour.lastDwell = -1; tour.dwellUntil = 0; tour.releaseAt = 0;
   tour.pace = 1;
+  const m = music();
   if (on){
     // the soundtrack scores the tour: restart it and match the two runtimes
-    if (track.play(true)){ track.loop = false; paceTourToTrack(); store.set({ audioOn: true }); }
-  } else if (track.playing()) track.loop = true;   // back to the free walk: repeat
+    if (m && m.play(true)){ m.loop = false; paceTourToTrack(); store.set({ audioOn: true }); }
+  } else if (m) m.loop = true;                     // back to the free walk: repeat
   store.set({ tourOn: on });
 }
 
@@ -260,7 +270,7 @@ function tick(){
         }
       }
     }
-    if (state.target > .998){ setTour(false); track.loop = false; }   // journey's end — the song finishes with the flag
+    if (state.target > .998){ setTour(false); const m = music(); if (m) m.loop = false; }   // journey's end — the song finishes with the flag
   }
 
   // how deep into the plaza ending we are (0..1)
@@ -533,6 +543,7 @@ function installInput(canvas){
 async function start(canvas){
   if (booted) return; booted = true;               // guard double-mount
   track.init();                                    // preload the soundtrack's metadata (if a file exists)
+  yt.init();                                       // and ready the YouTube player fallback
   if (MOBILE) document.body.classList.add('mobile');
   document.body.style.overflow = 'hidden';         // locked until Begin
 

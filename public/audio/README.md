@@ -1,6 +1,13 @@
 # Soundtrack drop-in
 
-The walks look for one audio file each in this folder (first extension found wins):
+**Default: the official YouTube embed.** With no files here, each walk plays its song
+through the YouTube IFrame player (`src/audio/yt.js`) — "Tiranga" (*Yodha*) for the Record,
+"Bol Ke Lab Azad Hain" (*Manto*) for the Pothole Yatra — streamed from YouTube with the
+rights holders' monetization intact, in a small visible dock (required by YouTube's API
+terms). Same trim/loop/tour behaviour as below.
+
+**Override: local files.** A file in this folder always takes precedence over the embed.
+The walks look for one audio file each (first extension found wins):
 
 | Walk | File | Auto-trimmed |
 |---|---|---|
