@@ -42,14 +42,18 @@
     padding:8px 14px;font-size:13px;cursor:pointer;backdrop-filter:blur(6px)}
   #tour-toggle[aria-pressed="true"]{border-color:var(--saffron);color:#ffd9a6}
 
-  /* the soundtrack's YouTube dock — the official embed must stay visible
-     while it plays (YouTube API terms: at least 200×200 px, controls on) */
-  #yt-dock{position:fixed;right:16px;bottom:58px;z-index:26;width:320px;height:200px;
+  /* the soundtrack's YouTube dock — the official embed, which must stay
+     visible and unobscured while it plays (YouTube API terms: at least
+     200×200 px, not hidden, not covered). So it is kept at exactly that
+     minimum and tucked into the bottom-left corner, clear of the zone
+     label, the progress bar and the finale montage, framed in the walk's
+     own sandstone so it reads as part of the promenade's furniture. */
+  #yt-dock{position:fixed;left:18px;bottom:58px;z-index:26;width:200px;height:200px;
     border-radius:10px;overflow:hidden;background:#000;display:none;
-    border:1px solid rgba(255,255,255,.18);box-shadow:0 12px 40px rgba(0,0,0,.55)}
+    border:1px solid rgba(210,168,106,.4);box-shadow:0 10px 34px rgba(0,0,0,.5)}
   #yt-dock.on{display:block}
   #yt-dock iframe{width:100%;height:100%;display:block;border:0}
-  @media (max-width:640px){#yt-dock{width:200px;height:200px;right:10px;bottom:72px}}
+  @media (max-width:640px){#yt-dock{left:10px;bottom:76px}}
   #year-readout{margin-right:230px}
 
   /* station index (museum floor plan) */
